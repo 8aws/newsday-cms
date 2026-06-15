@@ -1,0 +1,76 @@
+# ─── Newsday — docker-compose.yml ────────────────────────────────────────────
+# Versión: Newsday v0.8
+#
+# Levanta Newsday en un contenedor PHP 8.3 + Apache.
+# No requiere base de datos (todo el contenido es ficheros planos).
+#
+# Uso rápido:
+#   docker compose up -d
+#   Abrir http://localhost:8080 → redirige al instalador
+#
+# Para producción con dominio propio añade un proxy inverso (Nginx/Traefik).
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  newsday:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: newsday
+    restart: unless-stopped
+    ports:
+      - "8080:80"           # Cambia 8080 por el puerto que quieras exponer
+
+    volumes:
+      # Código fuente de Newsday (sin contenido, solo la app)
+      - .:/var/www/html
+
+      # Volúmenes persistentes — se mantienen aunque reconstruyas la imagen
+      - newsday_content:/var/www/html/content
+      - newsday_media:/var/www/html/media
+      - newsday_backups:/var/www/html/backups
+      - newsday_public:/var/www/html/public
+
+    environment:
+      # PHP: zona horaria
+      TZ: Europe/Madrid
+
+      # Opciones de PHP para producción (opcionales)
+      PHP_INI_SCAN_DIR: :/usr/local/etc/php/conf.d
+
+    # Ajuste de límites PHP en el arranque
+    command: >
+      bash -c "
+        echo 'upload_max_filesize = 64M'     >> /usr/local/etc/php/php.ini &&
+        echo 'post_max_size = 68M'           >> /usr/local/etc/php/php.ini &&
+        echo 'memory_limit = 256M'           >> /usr/local/etc/php/php.ini &&
+        echo 'max_execution_time = 120'      >> /usr/local/etc/php/php.ini &&
+        echo 'date.timezone = Europe/Madrid' >> /usr/local/etc/php/php.ini &&
+        apache2-foreground
+      "
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/newsday-api.php?action=ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+# ─── Volúmenes Docker ────────────────────────────────────────────────────────
+# Persisten el contenido fuera del contenedor.
+# Para ver dónde están: docker volume inspect newsday_content
+volumes:
+  newsday_content:
+  newsday_media:
+  newsday_backups:
+  newsday_public:
+
+# ─── Notas ───────────────────────────────────────────────────────────────────
+# • Primera vez: acceder a http://localhost:8080 → instalador automático
+# • Panel admin:  http://localhost:8080/Newsday.html
+# • API:          http://localhost:8080/newsday-api.php
+# • Portal lector: http://localhost:8080/reader.php
+#
+# • Para usar HTTPS en local: añade un proxy como Caddy o Traefik delante.
+# • Para producción con Let's Encrypt, añade un servicio 'proxy' basado en
+#   nginx:alpine + certbot, o usa Traefik con el plugin ACME.

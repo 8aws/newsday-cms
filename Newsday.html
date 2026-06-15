@@ -1,0 +1,1458 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Newsday — Administración</title>
+<link rel="stylesheet" href="admin/css/newsday.css">
+</head>
+<body>
+
+<!-- ══ LOGIN OVERLAY ══════════════════════════════════════════ -->
+<div id="login-overlay">
+  <div class="login-card">
+    <div class="login-logo">News<span>day</span></div>
+    <div class="login-sub">Panel de administración</div>
+    <div class="lerr" id="lerr"></div>
+    <label class="lbl">Usuario</label>
+    <input class="linput" id="l-user" type="text" value="admin" autocomplete="username">
+    <label class="lbl">Contraseña</label>
+    <input class="linput" id="l-pass" type="password" autocomplete="current-password"
+      onkeydown="if(event.key==='Enter') doLogin()">
+    <button class="lbtn" onclick="doLogin()">Entrar</button>
+    <div class="lmode">¿Sin servidor PHP? <span onclick="offlineMode()">Modo offline</span></div>
+  </div>
+</div>
+
+<!-- ══ TOPBAR CON NAVEGACIÓN DE PESTAÑAS ══════════════════════ -->
+<nav id="topbar">
+  <div id="logo">News<span>day</span><small>v1.0</small></div>
+  <div class="tab-nav">
+    <button class="tnav-btn active" data-tab="dashboard" onclick="switchTab('dashboard',this)">📊 <span data-i18n="tab.dashboard">Dashboard</span></button>
+    <button class="tnav-btn" data-tab="escribir"  onclick="switchTab('escribir',this)">✏ <span data-i18n="tab.escribir">Escribir</span></button>
+    <button class="tnav-btn" data-tab="maquetar"  onclick="switchTab('maquetar',this)">⊞ <span data-i18n="tab.maquetar">Maquetar</span></button>
+    <button class="tnav-btn" data-tab="organizar" onclick="switchTab('organizar',this)">🗂 <span data-i18n="tab.organizar">Organizar</span></button>
+    <button class="tnav-btn" data-tab="modelar"   onclick="switchTab('modelar',this)">🎨 <span data-i18n="tab.modelar">Modelar</span></button>
+    <button class="tnav-btn" data-tab="medios"    onclick="switchTab('medios',this)">🖼 <span data-i18n="tab.medios">Medios</span></button>
+    <button class="tnav-btn" data-tab="publicar"  onclick="switchTab('publicar',this)">🌐 <span data-i18n="tab.publicar">Publicar</span></button>
+    <button class="tnav-btn" data-tab="usuarios"  onclick="switchTab('usuarios',this)" id="tab-btn-usuarios">👥 Usuarios</button>
+    <button class="tnav-btn" data-tab="ajustes"   onclick="switchTab('ajustes',this)">⚙ <span data-i18n="tab.ajustes">Ajustes</span></button>
+  </div>
+  <div class="top-actions">
+    <span id="conn-badge" class="conn-off">● Offline</span>
+    <button id="topbar-save-btn" class="btn btn-primary btn-sm" onclick="saveCurrentContext()" title="Guardar (Ctrl+S)" style="display:none">💾 <span data-i18n="topbar.save">Guardar</span></button>
+    <button class="btn btn-ghost  btn-sm" onclick="doLogout()" data-i18n="topbar.logout">Salir</button>
+  </div>
+</nav>
+
+<!-- ══ PANELES DE PESTAÑA ══════════════════════════════════════ -->
+<div id="tabpanels">
+
+  <!-- ── DASHBOARD ──────────────────────────────────────────── -->
+  <div id="tab-dashboard" class="tabpanel active">
+    <div class="dash-scroll">
+      <div class="dash-head">
+        <h1>Panel de control</h1>
+        <p id="dash-sub">Cargando publicaciones…</p>
+      </div>
+      <div class="dash-stats">
+        <div class="stat-card stat-blue" ><div class="stat-n" id="stat-total">—</div><div class="stat-l">Posts totales</div></div>
+        <div class="stat-card stat-green"><div class="stat-n" id="stat-pub">—</div><div class="stat-l">Publicados</div></div>
+        <div class="stat-card stat-amber"><div class="stat-n" id="stat-draft">—</div><div class="stat-l">Borradores</div></div>
+        <div class="stat-card stat-slate"><div class="stat-n" id="stat-pages">—</div><div class="stat-l">Páginas estáticas</div></div>
+      </div>
+      <!-- ── Modo mantenimiento ──────────────────────────────── -->
+      <div class="maint-widget" id="maint-widget">
+        <div class="maint-icon">🔧</div>
+        <div class="maint-info">
+          <h3>Modo mantenimiento</h3>
+          <p>Muestra una página de «Estamos en mantenimiento» en lugar del sitio. Se aplica inmediatamente al pulsar el interruptor.</p>
+          <span id="maint-badge" class="maint-badge maint-badge-off">Inactivo</span>
+        </div>
+        <div class="maint-controls">
+          <select class="maint-page-sel" id="maint-page-sel" title="Página CMS personalizada (opcional)">
+            <option value="">— Página por defecto —</option>
+          </select>
+          <label class="maint-toggle" title="Activar / desactivar mantenimiento">
+            <input type="checkbox" id="maint-toggle-chk" onchange="toggleMaintenance(this.checked)">
+            <span class="maint-toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="dash-body">
+        <!-- Col 1: publicaciones recientes -->
+        <div class="dash-main">
+          <div class="dash-section">
+            <h3>Publicaciones recientes</h3>
+            <div id="dash-posts-list"><div class="empty-hint">Cargando…</div></div>
+          </div>
+        </div>
+
+        <!-- Col 2: páginas + nube de tags -->
+        <div class="dash-col2">
+          <div class="dash-section">
+            <h3>Páginas del sitio</h3>
+            <div id="dash-pages-list"><div class="empty-hint" style="font-size:12px;color:#94a3b8">Cargando…</div></div>
+          </div>
+          <div class="dash-section">
+            <h3>Nube de etiquetas</h3>
+            <div class="tag-cloud" id="dash-tag-cloud"><div class="empty-hint" style="font-size:12px;color:#94a3b8">Cargando…</div></div>
+          </div>
+        </div>
+
+        <!-- Col 3: acciones rápidas + espacio + última generación -->
+        <div class="dash-side">
+          <div class="dash-section">
+            <h3>Acciones rápidas</h3>
+            <div class="qa-grid">
+              <button class="qa-btn" onclick="newPost();switchTab('escribir')">✏ Nuevo post</button>
+              <button class="qa-btn" onclick="switchTab('maquetar')">⊞ Ir a maquetar</button>
+              <button class="qa-btn" onclick="runGenerateDash()">⚡ Generar sitio</button>
+              <button class="qa-btn" onclick="createServerBackup()">📦 Crear backup</button>
+              <a  class="qa-btn" id="qa-ver-sitio" href="public/" target="_blank"
+                  style="pointer-events:none;opacity:.38" title="Genera el sitio primero">🌐 Ver sitio público</a>
+              <button class="qa-btn" onclick="switchTab('ajustes')">⚙ Configuración</button>
+            </div>
+          </div>
+          <div class="dash-section">
+            <h3>Espacio en disco</h3>
+            <div id="dash-disk">
+              <div class="disk-row"><span class="disk-label">Posts</span><div class="disk-bar-wrap"><div class="disk-bar" id="disk-bar-posts" style="width:0%"></div></div><span class="disk-val" id="disk-val-posts">—</span></div>
+              <div class="disk-row"><span class="disk-label">Medios</span><div class="disk-bar-wrap"><div class="disk-bar" id="disk-bar-media" style="width:0%;background:#16a34a"></div></div><span class="disk-val" id="disk-val-media">—</span></div>
+              <div class="disk-row"><span class="disk-label">Sitio</span><div class="disk-bar-wrap"><div class="disk-bar" id="disk-bar-site" style="width:0%;background:#d97706"></div></div><span class="disk-val" id="disk-val-site">—</span></div>
+            </div>
+          </div>
+          <div class="dash-section" id="dash-gen-wrap" style="display:none">
+            <h3>Última generación</h3>
+            <div id="dash-gen-out" style="font-size:12px;color:#64748b;line-height:1.6"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Copias de seguridad ──────────────────────────────── -->
+      <div class="dash-section dash-backup-section">
+        <div class="dash-backup-head">
+          <h3>📦 Copias de seguridad</h3>
+          <div class="backup-header-controls">
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#64748b">
+              <input type="checkbox" id="auto-backup-toggle" onchange="saveAutoBackupConfig()">
+              Auto-backup diario
+            </label>
+            <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:#64748b">
+              Conservar
+              <input type="number" id="auto-backup-days" class="sinp" min="1" max="90" value="7"
+                     style="width:52px;padding:2px 6px" onchange="saveAutoBackupConfig()">
+              días
+            </label>
+            <button id="btn-create-backup" class="btn btn-primary btn-sm" onclick="createServerBackup()">+ Nueva copia</button>
+          </div>
+        </div>
+        <div id="backup-list" class="backup-list">
+          <div style="font-size:12px;color:#94a3b8">Cargando…</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── ESCRIBIR ────────────────────────────────────────────── -->
+  <div id="tab-escribir" class="tabpanel">
+    <div id="escribir-inner">
+
+      <!-- Posts sidebar -->
+      <div id="posts-sidebar">
+        <div class="ps-head">
+          <span class="ps-head-lbl">Publicaciones</span>
+          <button class="btn btn-primary btn-sm" onclick="newPost()">＋</button>
+        </div>
+        <div id="posts-list"></div>
+      </div>
+
+      <!-- Editor principal -->
+      <div id="editor-panel">
+        <div class="ed-topbar">
+          <span class="ed-topbar-title" id="ed-current-title">Sin título</span>
+          <span id="status-badge" class="sb-draft">Borrador</span>
+          <button class="btn btn-ghost btn-sm" onclick="previewPost()">👁 Preview</button>
+          <button class="btn btn-ghost btn-sm" onclick="switchTab('maquetar')">⊞ Maquetar</button>
+        </div>
+        <textarea id="post-title" placeholder="Título del post…" rows="2" oninput="syncTitle()"></textarea>
+        <div id="meta-bar">
+          <input  type="date" id="meta-date"   class="mi" onchange="syncMeta()">
+          <select id="meta-status" class="mi" onchange="syncStatus()">
+            <option value="draft">Borrador</option>
+            <option value="published">Publicado</option>
+          </select>
+          <input type="text" id="meta-tags" class="mi" placeholder="etiquetas, separadas, por coma" oninput="syncMeta()">
+          <select id="meta-access" class="mi meta-access-sel" onchange="syncMeta()" title="Nivel de acceso al contenido">
+            <option value="public">🌐 Público</option>
+            <option value="members">👤 Miembros</option>
+            <option value="subscriber">◆ Suscriptor</option>
+            <option value="premium">★ Premium</option>
+          </select>
+        </div>
+        <div id="ed-toolbar">
+          <button class="tb" onclick="ex('bold')"><b>N</b></button>
+          <button class="tb" onclick="ex('italic')"><i>C</i></button>
+          <button class="tb" onclick="ex('underline')"><u>S</u></button>
+          <div class="tsep2"></div>
+          <button class="tb" onclick="ex('formatBlock','h1')">T1</button>
+          <button class="tb" onclick="ex('formatBlock','h2')">T2</button>
+          <button class="tb" onclick="ex('formatBlock','h3')">T3</button>
+          <button class="tb" onclick="ex('formatBlock','p')">¶</button>
+          <div class="tsep2"></div>
+          <button class="tb" onclick="ex('insertUnorderedList')">• —</button>
+          <button class="tb" onclick="ex('insertOrderedList')">1.</button>
+          <button class="tb" onclick="ex('formatBlock','blockquote')">❝</button>
+          <div class="tsep2"></div>
+          <button class="tb" onclick="ex('justifyLeft')">⇤</button>
+          <button class="tb" onclick="ex('justifyCenter')">↔</button>
+          <button class="tb" onclick="ex('justifyRight')">⇥</button>
+          <div class="tsep2"></div>
+          <button class="tb" onclick="doLink()">🔗</button>
+          <button class="tb" onclick="insertMediaInEditor()" title="Insertar imagen">🖼</button>
+          <button class="tb" onclick="ex('removeFormat')" title="Limpiar formato">✕f</button>
+        </div>
+        <div id="ed-body" contenteditable="true" oninput="syncContent()" onkeyup="updateWC()"></div>
+        <div class="ed-foot">
+          <span id="wc">0 palabras</span>
+        </div>
+      </div>
+
+      <!-- Galería lateral -->
+      <div id="media-sidebar">
+        <div class="ms-head">Galería rápida</div>
+        <div id="media-mini-grid"></div>
+        <button class="btn btn-ghost ms-all-btn" onclick="openMediaModal('editor')">📁 Todos los medios</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── MAQUETAR ────────────────────────────────────────────── -->
+  <div id="tab-maquetar" class="tabpanel">
+    <div id="maquetar-inner">
+
+      <!-- ① Tipo de página -->
+      <div id="maq-type-picker-wrap">
+        <div class="maq-step-label">① Tipo de página que vas a diseñar</div>
+        <div class="maq-type-picker">
+          <div class="maq-type-card" data-type="portada" onclick="setMaqPageType('portada',this)">
+            <div class="maq-type-ic">🗞</div>
+            <div class="maq-type-name">Portada</div>
+          </div>
+          <div class="maq-type-card" data-type="posts" onclick="setMaqPageType('posts',this)">
+            <div class="maq-type-ic">📋</div>
+            <div class="maq-type-name">Lista posts</div>
+          </div>
+          <div class="maq-type-card" data-type="single" onclick="setMaqPageType('single',this)">
+            <div class="maq-type-ic">📝</div>
+            <div class="maq-type-name">Post</div>
+          </div>
+          <div class="maq-type-card" data-type="page" onclick="setMaqPageType('page',this)">
+            <div class="maq-type-ic">📄</div>
+            <div class="maq-type-name">Página estática</div>
+          </div>
+          <div class="maq-type-card" data-type="libre" onclick="setMaqPageType('libre',this)">
+            <div class="maq-type-ic">✦</div>
+            <div class="maq-type-name">Libre</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ② Plantillas guardadas para este tipo -->
+      <div id="maq-saved-wrap">
+        <div class="maq-step-label">② Modificar plantilla guardada <span id="maq-saved-count" class="maq-saved-count-badge"></span></div>
+        <div id="maq-saved-layouts" class="maq-saved-layouts">
+          <div class="maq-no-saved">No hay plantillas guardadas para este tipo</div>
+        </div>
+        <div class="maq-or">— o crea una nueva desde cero —</div>
+      </div>
+
+      <!-- ③ Barra de herramientas del lienzo -->
+      <div id="lt-toolbar">
+        <label>Plantilla de inicio:</label>
+        <select class="lsel" id="starter-tpl-sel" onchange="applyTplFromSel()">
+          <option value="blank">Lienzo vacío</option>
+          <option value="article">Artículo</option>
+          <option value="magazine">Magazine 3 col</option>
+          <option value="bulletin">Boletín 2 col</option>
+          <option value="newspaper">Periódico</option>
+          <option value="galeria">Galería</option>
+          <option value="landing">Landing</option>
+          <option value="grid3">Cuadrícula 3×3</option>
+          <option value="article2col">Artículo 2 col</option>
+        </select>
+        <div class="tsep-v"></div>
+        <label>Cols:</label>
+        <select class="lsel" id="cols-sel" onchange="updateCols()" style="width:55px">
+          <option value="8">8</option><option value="10">10</option>
+          <option value="12" selected>12</option><option value="16">16</option>
+        </select>
+        <label>Filas:</label>
+        <select class="lsel" id="rows-sel" onchange="updateRows()" style="width:55px">
+          <option value="12">12</option><option value="16" selected>16</option>
+          <option value="20">20</option><option value="24">24</option>
+        </select>
+        <div class="tsep-v"></div>
+        <button class="btn btn-ghost btn-sm" onclick="toggleGrid()">⊞ Cuadrícula</button>
+        <button class="btn btn-ghost btn-sm" onclick="previewPost()">👁 Preview</button>
+        <button class="btn btn-ghost btn-sm" onclick="newMaqLayout()" title="Limpiar el lienzo para empezar de cero">✕ Nuevo</button>
+        <button class="btn btn-primary btn-sm" onclick="saveAsLayout()" title="Guardar el layout actual como plantilla reutilizable">💾 Guardar plantilla</button>
+        <span id="lt-hint">Selecciona un tipo de bloque y arrastra sobre la rejilla</span>
+      </div>
+
+      <!-- Paleta de bloques + lienzo -->
+      <div id="palette"><span id="pal-label">Bloques:</span></div>
+      <div id="gwork">
+        <div id="maq-hf-top" class="maq-hf-preview maq-hint-hf" style="display:none"></div>
+        <div id="gpage">
+          <div id="gcanvas">
+            <div id="govl"></div>
+            <div id="phi"></div>
+          </div>
+        </div>
+        <div id="maq-hf-bottom" class="maq-hf-preview maq-hint-hf" style="display:none"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── ORGANIZAR ───────────────────────────────────────────── -->
+  <div id="tab-organizar" class="tabpanel">
+  <div class="tab-scroll" style="padding:0">
+  <div class="org2-layout">
+
+    <!-- ══ A. INICIO DEL SITIO ══════════════════════════════ -->
+    <section class="org2-section">
+      <div class="org2-section-head">
+        <h2 class="org2-title">🏠 Inicio del sitio</h2>
+        <span class="org2-hint">Define qué encuentra el usuario al entrar en tu web</span>
+      </div>
+      <div class="hp-cards" id="hp-cards">
+        <div class="hp-card" data-type="posts" onclick="setHomepageType('posts',this)">
+          <div class="hp-card-thumb">
+            <svg viewBox="0 0 120 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="120" height="80" rx="6" fill="#f1f5f9"/>
+              <rect x="8" y="10" width="104" height="12" rx="3" fill="#cbd5e1"/>
+              <rect x="8" y="28" width="28" height="28" rx="3" fill="#e2e8f0"/>
+              <rect x="42" y="28" width="70" height="6" rx="2" fill="#cbd5e1"/>
+              <rect x="42" y="38" width="50" height="4" rx="2" fill="#e2e8f0"/>
+              <rect x="8" y="62" width="28" height="28" rx="3" fill="#e2e8f0"/>
+              <rect x="42" y="62" width="70" height="6" rx="2" fill="#cbd5e1"/>
+              <rect x="42" y="72" width="50" height="4" rx="2" fill="#e2e8f0"/>
+            </svg>
+          </div>
+          <div class="hp-card-label">Lista de publicaciones</div>
+          <div class="hp-card-desc">Blog clásico: los artículos más recientes en portada</div>
+        </div>
+        <div class="hp-card" data-type="portada" onclick="setHomepageType('portada',this)">
+          <div class="hp-card-thumb">
+            <svg viewBox="0 0 120 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="120" height="80" rx="6" fill="#f1f5f9"/>
+              <rect x="8" y="8" width="104" height="8" rx="2" fill="#334155"/>
+              <rect x="8" y="20" width="68" height="38" rx="3" fill="#cbd5e1"/>
+              <rect x="80" y="20" width="32" height="18" rx="2" fill="#e2e8f0"/>
+              <rect x="80" y="42" width="32" height="16" rx="2" fill="#e2e8f0"/>
+              <rect x="8" y="62" width="32" height="12" rx="2" fill="#e2e8f0"/>
+              <rect x="44" y="62" width="32" height="12" rx="2" fill="#e2e8f0"/>
+              <rect x="80" y="62" width="32" height="12" rx="2" fill="#e2e8f0"/>
+            </svg>
+          </div>
+          <div class="hp-card-label">Portada personalizada</div>
+          <div class="hp-card-desc">Layout tipo magazine o periódico elegido por ti</div>
+        </div>
+        <div class="hp-card" data-type="page" onclick="setHomepageType('page',this)">
+          <div class="hp-card-thumb">
+            <svg viewBox="0 0 120 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="120" height="80" rx="6" fill="#f1f5f9"/>
+              <rect x="8" y="8" width="104" height="8" rx="2" fill="#334155"/>
+              <rect x="20" y="24" width="80" height="6" rx="2" fill="#334155"/>
+              <rect x="30" y="34" width="60" height="4" rx="2" fill="#cbd5e1"/>
+              <rect x="8" y="46" width="104" height="4" rx="2" fill="#e2e8f0"/>
+              <rect x="8" y="54" width="90" height="4" rx="2" fill="#e2e8f0"/>
+              <rect x="8" y="62" width="70" height="4" rx="2" fill="#e2e8f0"/>
+            </svg>
+          </div>
+          <div class="hp-card-label">Página estática</div>
+          <div class="hp-card-desc">Una página específica como bienvenida o about</div>
+        </div>
+      </div>
+      <div id="hp-page-selector" class="hp-sub-selector" style="display:none">
+        <label>Página de inicio:</label>
+        <select id="hp-page-ref" onchange="S.siteConfig.siteStructure.homepageRef=this.value">
+          <option value="">— Selecciona una página —</option>
+        </select>
+      </div>
+      <div id="hp-portada-selector" class="hp-sub-selector" style="display:none">
+        <label>Portada activa:</label>
+        <select id="hp-portada-ref" onchange="S.siteConfig.siteStructure.activePortada=this.value">
+          <option value="">— Selecciona una portada —</option>
+        </select>
+        <span class="org2-hint" style="margin-left:8px">O actívala desde la sección Portadas</span>
+      </div>
+    </section>
+
+    <div class="org2-divider"></div>
+
+    <!-- ══ B. PORTADAS ══════════════════════════════════════ -->
+    <section class="org2-section">
+      <div class="org2-section-head">
+        <h2 class="org2-title">🗞 Portadas</h2>
+        <button class="btn btn-primary btn-sm" onclick="newPortada()">＋ Nueva portada</button>
+      </div>
+      <div class="org2-hint" style="margin-bottom:12px">Layouts tipo magazine guardados. Activa uno como página de inicio o úsalo como plantilla.</div>
+      <div id="portadas-grid" class="portadas-grid">
+        <div class="empty-hint" style="padding:20px">Cargando…</div>
+      </div>
+    </section>
+
+    <div class="org2-divider"></div>
+
+    <!-- ══ C. PLANTILLAS DE SECCIÓN ══════════════════════════ -->
+    <section class="org2-section">
+      <div class="org2-section-head">
+        <h2 class="org2-title">📐 Plantillas de sección</h2>
+      </div>
+      <div class="org2-hint" style="margin-bottom:14px">Asigna una plantilla de Maquetar a cada tipo de página. Guarda plantillas desde el botón «Guardar como plantilla» en Maquetar.</div>
+      <div class="section-tpl-grid">
+        <div class="st-row">
+          <div class="st-icon">📋</div>
+          <div class="st-info">
+            <div class="st-name">Lista de publicaciones</div>
+            <div class="st-desc">Página con el listado de artículos</div>
+          </div>
+          <select class="sinp st-select" id="tpl-posts" onchange="S.siteConfig.sectionTemplates.posts=this.value">
+            <option value="">— Sin plantilla personalizada —</option>
+          </select>
+        </div>
+        <div class="st-row">
+          <div class="st-icon">📝</div>
+          <div class="st-info">
+            <div class="st-name">Post individual</div>
+            <div class="st-desc">Cada artículo publicado</div>
+          </div>
+          <select class="sinp st-select" id="tpl-single" onchange="S.siteConfig.sectionTemplates.single=this.value">
+            <option value="">— Sin plantilla personalizada —</option>
+          </select>
+        </div>
+        <div class="st-row">
+          <div class="st-icon">📄</div>
+          <div class="st-info">
+            <div class="st-name">Página estática</div>
+            <div class="st-desc">Páginas creadas en Organizar → Páginas</div>
+          </div>
+          <select class="sinp st-select" id="tpl-page" onchange="S.siteConfig.sectionTemplates.page=this.value">
+            <option value="">— Sin plantilla personalizada —</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <div class="org2-divider"></div>
+
+    <!-- ══ D. ASIGNACIÓN DE CONTENIDO ═══════════════════════ -->
+    <section class="org2-section">
+      <div class="org2-section-head">
+        <h2 class="org2-title">🔗 Asignación de contenido</h2>
+      </div>
+      <div class="org2-hint" style="margin-bottom:14px">Define qué contenido del CMS va en cada bloque de la plantilla según el tipo de página.</div>
+      <div class="ba-context-tabs">
+        <button class="ba-ctx-btn on" onclick="showBlockAssignment('portada',this)">Portada</button>
+        <button class="ba-ctx-btn" onclick="showBlockAssignment('posts',this)">Lista posts</button>
+        <button class="ba-ctx-btn" onclick="showBlockAssignment('single',this)">Post individual</button>
+        <button class="ba-ctx-btn" onclick="showBlockAssignment('page',this)">Página</button>
+      </div>
+      <div id="block-assignment-panel" class="block-assignment-panel">
+        <div class="empty-hint" style="padding:20px">Selecciona un contexto y asigna contenido a los bloques</div>
+      </div>
+    </section>
+
+    <div class="org2-divider"></div>
+
+    <!-- ══ E. NAVEGACIÓN ════════════════════════════════════ -->
+    <section class="org2-section">
+      <div class="org2-section-head">
+        <h2 class="org2-title">🧭 Navegación</h2>
+      </div>
+      <div class="org2-hint" style="margin-bottom:10px">Links del menú de navegación de todas las páginas generadas.</div>
+      <div id="nav-list"></div>
+      <button class="btn btn-primary" style="margin-top:12px" onclick="addNavItem()">＋ Añadir enlace</button>
+    </section>
+
+    <div class="org2-divider"></div>
+
+    <!-- ══ F. PÁGINAS ESTÁTICAS ══════════════════════════════ -->
+    <section class="org2-section">
+      <div class="org2-section-head">
+        <h2 class="org2-title">📄 Páginas estáticas</h2>
+        <button class="btn btn-primary btn-sm" onclick="newPage()">＋ Nueva</button>
+      </div>
+      <div class="pages-layout">
+        <div class="pages-sidebar">
+          <div id="pages-list-inner"><div class="empty-hint" style="padding:16px">Cargando…</div></div>
+        </div>
+        <div class="page-editor" id="page-editor">
+          <div class="empty-hint" style="padding:40px;text-align:center">
+            Selecciona una página o crea una nueva
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="org2-divider"></div>
+
+    <!-- ══ G. ANUNCIOS ══════════════════════════════════════ -->
+    <section class="org2-section">
+      <div class="org2-section-head">
+        <h2 class="org2-title">◻ Anuncios</h2>
+        <button class="btn btn-primary btn-sm" onclick="addAdZone()">＋ Nueva zona</button>
+      </div>
+      <div class="org2-hint" style="margin-bottom:10px">Zonas de anuncio identificadas por nombre. En Maquetar escribe ese nombre en el campo «Texto» de un bloque de Publicidad para vincularlas.</div>
+      <div id="ads-list"></div>
+    </section>
+
+    <div class="org2-divider"></div>
+
+    <!-- ══ H. ETIQUETAS ══════════════════════════════════════ -->
+    <section class="org2-section">
+      <div class="org2-section-head">
+        <h2 class="org2-title">🏷 Etiquetas</h2>
+      </div>
+      <div class="org2-hint" style="margin-bottom:10px">Etiquetas usadas en tus publicaciones, generadas automáticamente.</div>
+      <div id="tags-grid" class="tags-grid"></div>
+    </section>
+
+    <!-- ══ SAVE MSG (el guardar usa el botón de la topbar) ═════ -->
+    <div class="org2-save-bar">
+      <span id="org-save-msg" class="save-msg"></span>
+    </div>
+
+  </div>
+  </div>
+  </div>
+
+  <!-- ── MODELAR ─────────────────────────────────────────────── -->
+  <div id="tab-modelar" class="tabpanel">
+    <div class="mod-layout">
+      <div class="mod-subtabs">
+        <button class="mod-tab on" onclick="switchModTab('header',this)">▬ Cabecera global</button>
+        <button class="mod-tab"    onclick="switchModTab('footer',this)">▬ Pie de página global</button>
+        <button class="mod-tab"    onclick="switchModTab('temas',this)">🎨 Temas</button>
+        <button class="mod-tab"    onclick="switchModTab('favicon',this)">🖼 Favicon</button>
+        <button class="mod-tab"    onclick="switchModTab('paginas',this)">✦ Páginas</button>
+      </div>
+      <div class="mod-content">
+
+        <div id="mod-header" class="mod-panel on">
+          <div class="dtab-hint">Estos bloques se insertan en la parte superior de <strong>todas</strong> las páginas generadas del sitio. El bloque <strong>Cabecera</strong> incluye logo, título, descripción y promo del sitio, editables directamente en el bloque.</div>
+          <div id="header-canvas"></div>
+          <div class="hf-palette">
+            <span class="hf-pal-lbl">Añadir bloque:</span>
+            <div class="pb" onclick="addHFBlock('header','header')"><span class="pb-ic">▬</span>Cabecera</div>
+            <div class="pb" onclick="addHFBlock('header','nav')"><span class="pb-ic">☰</span>Nav</div>
+            <div class="pb" onclick="addHFBlock('header','image')"><span class="pb-ic">🖼</span>Imagen</div>
+            <div class="pb" onclick="addHFBlock('header','text')"><span class="pb-ic">T</span>Texto</div>
+            <div class="pb" onclick="addHFBlock('header','separator')"><span class="pb-ic">─</span>Sep</div>
+          </div>
+        </div>
+
+        <div id="mod-footer" class="mod-panel">
+          <div class="dtab-hint">Estos bloques se insertan en la parte inferior de <strong>todas</strong> las páginas generadas del sitio. El bloque <strong>Pie</strong> incluye logo, título, descripción y promo del sitio, editables directamente en el bloque.</div>
+          <div id="footer-canvas"></div>
+          <div class="hf-palette">
+            <span class="hf-pal-lbl">Añadir bloque:</span>
+            <div class="pb" onclick="addHFBlock('footer','footer')"><span class="pb-ic">▬</span>Pie</div>
+            <div class="pb" onclick="addHFBlock('footer','text')"><span class="pb-ic">T</span>Texto</div>
+            <div class="pb" onclick="addHFBlock('footer','separator')"><span class="pb-ic">─</span>Sep</div>
+            <div class="pb" onclick="addHFBlock('footer','nav')"><span class="pb-ic">☰</span>Nav</div>
+            <div class="pb" onclick="addHFBlock('footer','ad')"><span class="pb-ic">◻</span>Anuncio</div>
+          </div>
+        </div>
+
+        <div id="mod-temas" class="mod-panel">
+          <div class="dtab-hint">Elige la apariencia visual de tu sitio. El tema se aplica a todas las páginas generadas al publicar.</div>
+          <div class="theme-toolbar">
+            <button class="theme-btn-new" onclick="openThemeEditor(null)">＋ Nuevo tema</button>
+            <label class="theme-btn-upload" title="Sube un archivo .php de tema">
+              ⬆ Subir tema
+              <input type="file" id="theme-upload-input" accept=".php" style="display:none" onchange="uploadThemeFile(this)">
+            </label>
+            <a href="media/docs/tutorial-temas.html" target="_blank" class="theme-btn-help" title="Cómo crear temas">? Tutorial</a>
+          </div>
+          <div id="theme-grid" class="theme-grid">
+            <div class="theme-loading">Cargando temas…</div>
+          </div>
+          <!-- Editor de tema (panel inline) -->
+          <div id="theme-editor" class="theme-editor" style="display:none">
+            <div class="te-header">
+              <span id="te-title">Nuevo tema</span>
+              <button class="te-close" onclick="closeThemeEditor()">✕</button>
+            </div>
+            <div class="te-body">
+              <div class="te-section">
+                <div class="te-field-row">
+                  <div class="te-field">
+                    <label>Nombre del tema</label>
+                    <input type="text" id="te-name" placeholder="Mi tema personalizado">
+                  </div>
+                  <div class="te-field" style="flex:0 0 180px">
+                    <label>ID (slug)</label>
+                    <input type="text" id="te-id" placeholder="mi-tema">
+                  </div>
+                </div>
+                <div class="te-field">
+                  <label>Descripción</label>
+                  <input type="text" id="te-desc" placeholder="Breve descripción del estilo visual">
+                </div>
+              </div>
+
+              <div class="te-cols">
+                <!-- Columna izq: controles -->
+                <div class="te-controls">
+
+                  <div class="te-section-title">Cabecera</div>
+                  <div class="te-row"><label>Fondo cabecera</label><input type="color" data-var="--th-header-bg" class="te-color"></div>
+                  <div class="te-row"><label>Texto cabecera</label><input type="color" data-var="--th-header-fg" class="te-color"></div>
+                  <div class="te-row"><label>Fondo nav</label><input type="color" data-var="--th-nav-bg" class="te-color"></div>
+                  <div class="te-row"><label>Texto nav</label><input type="color" data-var="--th-nav-fg" class="te-color"></div>
+
+                  <div class="te-section-title">Cuerpo de página</div>
+                  <div class="te-row"><label>Fondo página</label><input type="color" data-var="--th-body-bg" class="te-color"></div>
+                  <div class="te-row"><label>Fondo contenido</label><input type="color" data-var="--th-wrap-bg" class="te-color"></div>
+                  <div class="te-row"><label>Texto</label><input type="color" data-var="--th-text" class="te-color"></div>
+                  <div class="te-row"><label>Títulos</label><input type="color" data-var="--th-heading" class="te-color"></div>
+                  <div class="te-row"><label>Texto secundario</label><input type="color" data-var="--th-muted" class="te-color"></div>
+                  <div class="te-row"><label>Bordes</label><input type="color" data-var="--th-border" class="te-color"></div>
+
+                  <div class="te-section-title">Acento</div>
+                  <div class="te-row"><label>Color acento</label><input type="color" data-var="--th-accent" class="te-color"></div>
+                  <div class="te-row"><label>Acento hover</label><input type="color" data-var="--th-accent-hover" class="te-color"></div>
+                  <div class="te-row"><label>Acento fallback</label><input type="color" data-var="--th-fallback-accent" class="te-color"></div>
+
+                  <div class="te-section-title">Pie de página</div>
+                  <div class="te-row"><label>Fondo footer</label><input type="color" data-var="--th-footer-bg" class="te-color"></div>
+                  <div class="te-row"><label>Texto footer</label><input type="color" data-var="--th-footer-fg" class="te-color"></div>
+
+                  <div class="te-section-title">Sidebar</div>
+                  <div class="te-row"><label>Fondo sidebar</label><input type="color" data-var="--th-sidebar-bg" class="te-color"></div>
+                  <div class="te-row"><label>Borde sidebar</label><input type="color" data-var="--th-sidebar-border" class="te-color"></div>
+
+                  <div class="te-section-title">Cita destacada</div>
+                  <div class="te-row"><label>Fondo pullquote</label><input type="color" data-var="--th-pullquote-bg" class="te-color"></div>
+                  <div class="te-row"><label>Texto pullquote</label><input type="color" data-var="--th-pullquote-fg" class="te-color"></div>
+                  <div class="te-row"><label>Borde pullquote</label><input type="color" data-var="--th-pullquote-border" class="te-color"></div>
+
+                  <div class="te-section-title">Tarjetas y etiquetas</div>
+                  <div class="te-row"><label>Fondo tarjeta</label><input type="color" data-var="--th-card-bg" class="te-color"></div>
+                  <div class="te-row"><label>Borde tarjeta</label><input type="color" data-var="--th-card-border" class="te-color"></div>
+                  <div class="te-row"><label>Fondo etiqueta</label><input type="color" data-var="--th-tag-bg" class="te-color"></div>
+                  <div class="te-row"><label>Texto etiqueta</label><input type="color" data-var="--th-tag-fg" class="te-color"></div>
+
+                  <div class="te-section-title">Tipografía</div>
+                  <div class="te-row te-row--select">
+                    <label>Fuente artículos</label>
+                    <select data-var="--th-body-font" class="te-select">
+                      <option value="Georgia,serif">Georgia (serif)</option>
+                      <option value="'Times New Roman',Times,serif">Times New Roman</option>
+                      <option value="'Palatino Linotype',Palatino,serif">Palatino</option>
+                      <option value="system-ui,sans-serif">System UI (sans)</option>
+                      <option value="'Segoe UI',Arial,sans-serif">Segoe UI</option>
+                      <option value="'Helvetica Neue',Helvetica,sans-serif">Helvetica Neue</option>
+                      <option value="'Courier New',Courier,monospace">Courier New (mono)</option>
+                    </select>
+                  </div>
+                  <div class="te-row te-row--select">
+                    <label>Fuente interfaz</label>
+                    <select data-var="--th-ui-font" class="te-select">
+                      <option value="system-ui,sans-serif">System UI (sans)</option>
+                      <option value="'Segoe UI',Arial,sans-serif">Segoe UI</option>
+                      <option value="'Helvetica Neue',Helvetica,sans-serif">Helvetica Neue</option>
+                      <option value="Georgia,serif">Georgia (serif)</option>
+                      <option value="'Courier New',Courier,monospace">Courier New (mono)</option>
+                    </select>
+                  </div>
+
+                  <div class="te-section-title">Imágenes</div>
+                  <div class="te-row te-row--select">
+                    <label>Radio bordes imágenes</label>
+                    <select data-var="--th-img-radius" class="te-select">
+                      <option value="0">Sin redondeo</option>
+                      <option value="4px">Sutil (4px)</option>
+                      <option value="8px">Medio (8px)</option>
+                      <option value="12px">Redondeado (12px)</option>
+                      <option value="50%">Circular (50%)</option>
+                    </select>
+                  </div>
+                  <div class="te-row te-row--select">
+                    <label>Sombra imágenes</label>
+                    <select data-var="--th-img-shadow" class="te-select">
+                      <option value="none">Sin sombra</option>
+                      <option value="0 2px 8px rgba(0,0,0,.12)">Suave</option>
+                      <option value="0 4px 16px rgba(0,0,0,.18)">Media</option>
+                      <option value="0 8px 32px rgba(0,0,0,.25)">Fuerte</option>
+                    </select>
+                  </div>
+                  <div class="te-row te-row--select">
+                    <label>Ancho máximo imágenes</label>
+                    <select data-var="--th-img-max-width" class="te-select">
+                      <option value="100%">100% (ancho completo)</option>
+                      <option value="90%">90%</option>
+                      <option value="75%">75%</option>
+                      <option value="60%">60%</option>
+                    </select>
+                  </div>
+                  <div class="te-row te-row--select">
+                    <label>Sombra contenedor</label>
+                    <select data-var="--th-wrap-shadow" class="te-select">
+                      <option value="none">Sin sombra</option>
+                      <option value="0 2px 16px rgba(0,0,0,.08)">Muy suave</option>
+                      <option value="0 4px 32px rgba(0,0,0,.12)">Suave (por defecto)</option>
+                      <option value="0 8px 40px rgba(0,0,0,.20)">Media</option>
+                      <option value="0 16px 60px rgba(0,0,0,.30)">Marcada</option>
+                    </select>
+                  </div>
+
+                </div>
+                <!-- Columna dcha: preview -->
+                <div class="te-preview-col">
+                  <div class="te-preview-label">Vista previa</div>
+                  <div id="te-preview" class="te-preview">
+                    <div class="tep-header">
+                      <span class="tep-logo">Newsday</span>
+                      <nav class="tep-nav"><a>Inicio</a><a>Temas</a><a>Acerca</a></nav>
+                    </div>
+                    <div class="tep-body">
+                      <div class="tep-hero">
+                        <div class="tep-tag">Destacado</div>
+                        <div class="tep-title">Titular de ejemplo para ver la tipografía</div>
+                        <div class="tep-meta">Por Redacción · 27 abr 2026</div>
+                      </div>
+                      <div class="tep-content">
+                        <p class="tep-p">Este es un párrafo de texto de ejemplo para previsualizar cómo queda la tipografía y los colores en el artículo publicado.</p>
+                        <blockquote class="tep-pullquote">Una cita destacada de impacto visual en el artículo.</blockquote>
+                        <div class="tep-img-wrap">
+                          <div class="tep-img"></div>
+                          <div class="tep-caption">Descripción de la imagen</div>
+                        </div>
+                        <p class="tep-p">Segundo párrafo con más texto de ejemplo para ver el interlineado y el contraste general de la combinación de colores elegida.</p>
+                      </div>
+                      <div class="tep-cards">
+                        <div class="tep-card"><div class="tep-card-tag">Sección</div><div class="tep-card-title">Artículo relacionado</div></div>
+                        <div class="tep-card"><div class="tep-card-tag">Opinión</div><div class="tep-card-title">Otro artículo</div></div>
+                      </div>
+                    </div>
+                    <div class="tep-footer"><span>© 2026 Mi Publicación</span></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="te-actions">
+                <button class="te-save" onclick="saveThemeEdits()">💾 Guardar tema</button>
+                <button class="te-export" onclick="exportTheme()" title="Descargar como archivo .php">⬇ Exportar .php</button>
+                <button class="te-delete" id="te-delete-btn" onclick="deleteThemeEditor()" style="display:none">🗑 Eliminar tema</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Favicon ── -->
+        <div id="mod-favicon" class="mod-panel">
+          <div class="dtab-hint">Sube una imagen para usarla como icono del sitio. Se generarán automáticamente todos los tamaños necesarios (favicon, Apple touch icon, iconos PWA) y se incluirán en el sitio al generar.</div>
+
+          <div class="fav-layout">
+            <!-- Zona de subida -->
+            <div class="fav-upload-col">
+              <div class="fav-drop-zone" id="fav-drop-zone"
+                   ondragover="event.preventDefault();this.classList.add('drag')"
+                   ondragleave="this.classList.remove('drag')"
+                   ondrop="favHandleDrop(event)">
+                <span style="font-size:2rem">🖼</span>
+                <p>Arrastra una imagen aquí</p>
+                <p style="font-size:11px;color:#64748b">PNG, JPG, WEBP · mínimo 512×512 recomendado</p>
+                <label class="btn btn-primary btn-sm" style="cursor:pointer;margin-top:8px">
+                  Seleccionar archivo
+                  <input type="file" id="fav-file-input" accept="image/png,image/jpeg,image/webp,image/gif" style="display:none" onchange="favHandleFile(this.files[0])">
+                </label>
+              </div>
+              <div id="fav-progress" style="display:none;margin-top:10px;font-size:12px;color:#64748b">Generando tamaños…</div>
+            </div>
+
+            <!-- Vista previa de tamaños -->
+            <div class="fav-preview-col" id="fav-preview-col">
+              <div class="fav-no-icon" id="fav-no-icon">
+                <span style="font-size:2rem;opacity:.3">🖼</span>
+                <p style="font-size:12px;color:#64748b;margin-top:6px">Sin favicon configurado</p>
+              </div>
+              <div id="fav-sizes" style="display:none">
+                <div class="fav-sizes-grid">
+                  <div class="fav-size-item">
+                    <img id="fav-prev-browser" class="fav-prev-img" style="width:32px;height:32px">
+                    <span class="fav-size-lbl">Navegador<br><small>32×32</small></span>
+                  </div>
+                  <div class="fav-size-item">
+                    <img id="fav-prev-apple" class="fav-prev-img" style="width:60px;height:60px;border-radius:13px">
+                    <span class="fav-size-lbl">Apple Touch<br><small>180×180</small></span>
+                  </div>
+                  <div class="fav-size-item">
+                    <img id="fav-prev-pwa" class="fav-prev-img" style="width:72px;height:72px;border-radius:16px">
+                    <span class="fav-size-lbl">App icon<br><small>192×192</small></span>
+                  </div>
+                </div>
+                <div class="fav-files-list" id="fav-files-list"></div>
+                <button class="btn btn-red btn-sm" style="margin-top:12px" onclick="favDelete()">🗑 Eliminar favicon</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="dtab-hint" style="margin-top:16px">
+            Al generar el sitio se crearán también: <strong>sitemap.xml</strong>, <strong>robots.txt</strong> y <strong>manifest.json</strong> automáticamente.
+          </div>
+        </div>
+
+        <!-- ── Páginas ── -->
+        <div id="mod-paginas" class="mod-panel">
+          <div class="mpg-layout">
+            <div class="mpg-sidebar">
+              <div class="mpg-sidebar-head">
+                <span class="mpg-sidebar-title">Páginas</span>
+                <button class="btn btn-primary btn-sm" onclick="mpgNewPage()">＋ Nueva</button>
+              </div>
+              <div id="mpg-list" class="mpg-list">
+                <div class="empty-hint" style="padding:16px;font-size:12px">Sin páginas</div>
+              </div>
+            </div>
+            <div class="mpg-editor" id="mpg-editor">
+              <div class="mpg-empty">
+                <div style="font-size:40px;margin-bottom:12px">✦</div>
+                <div style="font-weight:600;margin-bottom:6px">Constructor visual de páginas</div>
+                <div style="font-size:13px;color:#64748b">Selecciona una página de la lista o crea una nueva</div>
+              </div>
+            </div>
+            <div class="mpg-preview-pane" id="mpg-preview-pane">
+              <div class="mpg-preview-head">
+                <span>Vista previa</span>
+                <div class="mpg-preview-scale">
+                  <button class="mpg-scale-btn on" onclick="mpgSetScale(1,this)" title="Escritorio">🖥</button>
+                  <button class="mpg-scale-btn"    onclick="mpgSetScale(0.5,this)" title="Tablet">📱</button>
+                </div>
+              </div>
+              <div class="mpg-preview-wrap" id="mpg-preview-wrap">
+                <div class="mpg-preview-empty">Abre una página para ver la vista previa</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <div class="mod-footer">
+        <span id="mod-save-msg" class="save-msg"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MEDIOS ──────────────────────────────────────────────── -->
+  <div id="tab-medios" class="tabpanel">
+    <div class="medios-layout">
+      <div class="medios-toolbar">
+        <div id="medios-filter-tabs">
+          <button class="mmtab on" onclick="filterMediosTab('all',this)">Todos</button>
+          <button class="mmtab" onclick="filterMediosTab('images',this)">Imágenes</button>
+          <button class="mmtab" onclick="filterMediosTab('audio',this)">Audio</button>
+          <button class="mmtab" onclick="filterMediosTab('video',this)">Vídeo</button>
+          <button class="mmtab" onclick="filterMediosTab('docs',this)">Docs</button>
+        </div>
+        <div style="flex:1"></div>
+        <button class="btn btn-primary btn-sm" onclick="document.getElementById('medios-file-input').click()">⬆ Subir archivos</button>
+        <input type="file" id="medios-file-input" multiple
+          accept="image/*,audio/*,video/*,.pdf,.doc,.docx"
+          style="display:none" onchange="handleMediosUpload(event)">
+      </div>
+      <div id="medios-drop-zone" class="medios-drop-zone"
+        ondragover="event.preventDefault();this.classList.add('drag')"
+        ondragleave="this.classList.remove('drag')"
+        ondrop="handleMediosDrop(event)">
+        <span style="font-size:22px">📁</span>
+        <span>Arrastra archivos aquí para subirlos</span>
+        <div class="upload-progress" id="medios-progress"><div class="upload-bar" id="medios-bar"></div></div>
+      </div>
+      <div class="medios-main">
+        <div id="medios-grid" class="medios-grid"></div>
+        <div id="medios-detail" class="medios-detail">
+          <div class="medios-detail-empty">Selecciona un archivo<br>para ver sus detalles</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PUBLICAR ────────────────────────────────────────────── -->
+  <div id="tab-publicar" class="tabpanel">
+    <div class="pub-v2-layout">
+
+      <!-- Panel izquierdo: controles -->
+      <div class="pub-v2-controls">
+        <div class="pub-section">
+          <h3>🔍 Vista previa</h3>
+          <p style="font-size:12px;color:#64748b;margin:4px 0 10px">Genera una preview de todo el contenido (incluyendo borradores) sin modificar el sitio publicado.</p>
+          <button class="btn btn-primary" id="btn-preview" onclick="runGeneratePreview()">🔍 Generar vista previa</button>
+          <span id="preview-gen-info" style="font-size:11px;color:#64748b;display:block;margin-top:5px"></span>
+        </div>
+
+        <div class="pub-section">
+          <h3>⚡ Publicar sitio</h3>
+          <p style="font-size:12px;color:#64748b;margin:4px 0 10px">Convierte los posts <strong>publicados</strong> en HTML estático dentro de <code>public/</code>.</p>
+          <button class="btn btn-green" id="btn-gen" onclick="runGenerate()">⚡ Generar sitio</button>
+          <div class="gen-result" id="gen-result" style="margin-top:10px">
+            <strong id="gen-msg"></strong>
+            <div id="gen-list" style="font-size:11px;color:#64748b;margin-top:4px"></div>
+          </div>
+        </div>
+
+        <div class="pub-section">
+          <h3>🌐 Sitio público</h3>
+          <div id="pub-baseurl-warn" style="display:none;font-size:12px;color:#92400e;background:#fffbeb;
+               border:1px solid #fde68a;border-radius:6px;padding:8px 12px;margin-bottom:10px">
+            ⚠ La URL base tiene una barra final — quítala antes de guardar.
+          </div>
+          <a id="btn-ver-sitio" href="public/" target="_blank"
+             class="btn btn-ghost" style="border:1px solid #e2e8f0;color:#334155;pointer-events:none;opacity:.38"
+             title="Genera el sitio primero">🌐 Abrir en nueva pestaña</a>
+          <span id="ver-sitio-hint" style="font-size:11px;color:#94a3b8;display:block;margin-top:6px">— Aún no generado</span>
+        </div>
+
+        <div class="pub-section">
+          <h3>♻ Restaurar desde backup</h3>
+          <p style="font-size:12px;color:#64748b;margin:4px 0 10px">Sube un ZIP generado por Newsday. <strong>Sobreescribe todo el contenido.</strong></p>
+          <input type="file" id="restore-input" accept=".zip" style="display:none" onchange="runRestore(event)">
+          <button class="btn btn-ghost" style="border:1px solid #e2e8f0;color:#334155"
+            onclick="document.getElementById('restore-input').click()">⬆ Seleccionar ZIP</button>
+          <div class="gen-result" id="restore-result" style="margin-top:8px"></div>
+        </div>
+      </div>
+
+      <!-- Panel derecho: mini navegador de preview -->
+      <div class="pub-v2-preview">
+        <div class="preview-bar">
+          <button class="preview-nav-btn" onclick="previewNav('back')" title="Atrás">‹</button>
+          <button class="preview-nav-btn" onclick="previewNav('fwd')"  title="Adelante">›</button>
+          <button class="preview-nav-btn" onclick="previewNav('reload')" title="Recargar">⟳</button>
+          <input id="preview-url-bar" class="sinp preview-url-input" readonly value="— Pulsa 'Vista previa' para cargar —">
+          <a id="preview-open-tab" href="preview/" target="_blank" class="preview-nav-btn" title="Abrir en nueva pestaña">↗</a>
+        </div>
+        <div id="preview-placeholder" class="preview-placeholder">
+          <div style="font-size:48px;margin-bottom:12px">🔍</div>
+          <div style="font-weight:600;color:#334155;margin-bottom:6px">Vista previa instantánea</div>
+          <div style="font-size:12px;color:#94a3b8;max-width:280px;text-align:center">Incluye borradores. No modifica el sitio publicado.</div>
+          <button class="btn btn-primary" style="margin-top:16px" onclick="runGeneratePreview()">🔍 Generar vista previa</button>
+        </div>
+        <iframe id="preview-iframe" class="preview-iframe" style="display:none"
+                sandbox="allow-same-origin allow-scripts allow-popups allow-forms"></iframe>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── AJUSTES ─────────────────────────────────────────────── -->
+  <div id="tab-ajustes" class="tabpanel">
+    <div class="tab-scroll">
+      <div class="aj3-layout">
+
+        <!-- ══ COLUMNA 1: Configuración + Idiomas ════════════ -->
+        <div class="aj3-col">
+
+          <div class="aj-section">
+            <h3>⚙ Configuración del sitio</h3>
+            <div class="srow"><span class="slbl">Nombre del sitio</span><input class="sinp" id="cfg-sitename" style="flex:1"></div>
+            <div class="srow">
+              <span class="slbl">URL base</span>
+              <div style="flex:1;display:flex;flex-direction:column;gap:5px">
+                <input class="sinp" id="cfg-baseurl" placeholder="https://mipublicacion.com"
+                       oninput="validateBaseUrl(this.value)" style="width:100%">
+                <div id="baseurl-hint" style="font-size:11px;color:#64748b;line-height:1.4">
+                  Introduce solo tu dominio: <strong>https://mipublicacion.com</strong> (sin barra final ni <em>/public</em>).
+                  El generador añade <code>/public</code> automáticamente.
+                </div>
+                <div id="baseurl-warn" style="display:none;font-size:11px;color:#d97706;background:#fffbeb;
+                     border:1px solid #fde68a;border-radius:4px;padding:5px 8px"></div>
+              </div>
+            </div>
+            <div style="margin-top:12px">
+              <button class="btn btn-primary" onclick="saveSettings()">Guardar configuración</button>
+            </div>
+          </div>
+
+          <!-- Idioma del contenido -->
+          <div class="aj-section">
+            <h3>🌍 Idioma del contenido</h3>
+            <p style="font-size:12px;color:#64748b;margin:0 0 12px">
+              Establece el atributo <code>lang=</code> y las etiquetas hreflang de las páginas generadas.
+              El primero marcado es el idioma principal. Añade idiomas en <code>languages/content/</code>.
+            </p>
+            <div id="content-lang-wrap" class="lang-check-group">
+              <span style="font-size:12px;color:#94a3b8">Cargando idiomas…</span>
+            </div>
+            <div style="margin-top:10px;display:flex;align-items:center;gap:10px">
+              <button class="btn btn-primary" onclick="saveContentLangs()">Guardar idioma</button>
+              <span id="content-lang-msg" class="save-msg"></span>
+            </div>
+          </div>
+
+          <!-- Idioma de la interfaz -->
+          <div class="aj-section">
+            <h3>🗣 Idioma de la interfaz</h3>
+            <p style="font-size:12px;color:#64748b;margin:0 0 12px">
+              Cambia el idioma del panel. La preferencia se guarda en el navegador.
+              Añade traducciones en <code>languages/interface/</code>.
+            </p>
+            <div class="srow">
+              <span class="slbl">Idioma</span>
+              <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+                <select class="sinp" id="cfg-lang-ui" style="max-width:220px"
+                        onchange="I18N.setLang(this.value)">
+                  <option value="es">Español (es)</option>
+                </select>
+                <div id="cfg-lang-ui-wrap"></div>
+                <div style="font-size:11px;color:#64748b">
+                  «Auto» usa el idioma detectado del navegador al inicio.
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /col1 -->
+
+        <!-- ══ COLUMNA 2: Cuenta + Plugins ═══════════════════ -->
+        <div class="aj3-col">
+
+          <div class="aj-section">
+            <h3>👤 Cuenta de administrador</h3>
+            <div class="srow"><span class="slbl">Usuario</span><input class="sinp" id="cfg-user" style="flex:1"></div>
+            <div class="srow"><span class="slbl">Nueva contraseña</span>
+              <input class="sinp" id="cfg-pass" type="password" placeholder="Dejar vacío para no cambiar" style="flex:1">
+            </div>
+            <div class="srow"><span class="slbl">API Token</span>
+              <div class="token-display" id="cfg-token" title="Clic para copiar"
+                onclick="navigator.clipboard.writeText(this.textContent);toast('Token copiado')">cargando…</div>
+            </div>
+            <div style="margin-top:12px">
+              <button class="btn btn-primary" onclick="saveSettings()">Guardar cuenta</button>
+            </div>
+          </div>
+
+          <!-- ── Plugins ──────────────────────────────────── -->
+          <div class="aj-section">
+            <h3>🧩 Plugins</h3>
+            <p style="font-size:12px;color:#64748b;margin:0 0 12px">
+              Amplía el constructor de páginas con nuevos tipos de componentes.
+              Instala un plugin subiendo su archivo <code>.zip</code>.
+            </p>
+
+            <!-- Drop zone de instalación -->
+            <div class="plg-drop-zone" id="plg-drop-zone"
+                 ondragover="event.preventDefault();this.classList.add('drag')"
+                 ondragleave="this.classList.remove('drag')"
+                 ondrop="plgHandleDrop(event)">
+              <span style="font-size:20px">📦</span>
+              <span>Arrastra el ZIP aquí</span>
+              <span style="font-size:11px;opacity:.6">o haz clic para seleccionar</span>
+              <input type="file" id="plg-file-input" accept=".zip" style="display:none"
+                     onchange="plgHandleFile(this.files[0])">
+            </div>
+
+            <div class="plg-install-bar" id="plg-install-bar" style="display:none">
+              <span id="plg-install-msg" style="font-size:12px;color:#334155;font-weight:600;flex:1"></span>
+              <button class="btn btn-ghost btn-sm" onclick="plgClearInstall()">✕</button>
+              <button class="btn btn-primary btn-sm" id="plg-install-btn" onclick="plgInstallConfirm()" disabled>
+                ⬆ Instalar
+              </button>
+            </div>
+
+            <!-- Grid de plugins instalados -->
+            <div class="plg-grid" id="plugins-grid">
+              <div class="plg-empty" style="font-size:12px;color:#94a3b8;text-align:center;padding:20px">
+                Cargando plugins…
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /col2 -->
+
+        <!-- ══ COLUMNA 3: Actualizaciones + Acerca de ════════ -->
+        <div class="aj3-col">
+
+          <!-- Actualizaciones -->
+          <div class="aj-section">
+            <h3>🔄 Actualizaciones</h3>
+
+            <div class="upd-version-bar">
+              <span class="upd-ver-lbl">Versión instalada</span>
+              <span class="upd-ver-badge" id="upd-installed-ver">v1.0</span>
+            </div>
+
+            <div class="upd-block">
+              <div class="upd-block-title">⬆ Aplicar paquete</div>
+              <p class="upd-block-desc">
+                Sube un <code>.zip</code> de actualización. Solo se sobreescribirán archivos de código.
+                Los datos de tu sitio están completamente protegidos.
+              </p>
+              <div class="upd-drop-zone" id="upd-drop-zone"
+                   ondragover="event.preventDefault();this.classList.add('drag')"
+                   ondragleave="this.classList.remove('drag')"
+                   ondrop="handleUpdateDrop(event)">
+                <span style="font-size:24px">📦</span>
+                <span>Arrastra el ZIP aquí</span>
+                <span style="font-size:11px;opacity:.6">o haz clic para seleccionar</span>
+                <input type="file" id="upd-file-input" accept=".zip" style="display:none"
+                       onchange="handleUpdateFile(this.files[0])">
+              </div>
+              <div class="upd-file-chosen" id="upd-file-chosen" style="display:none">
+                <span id="upd-file-name" style="font-size:12px;color:#334155;font-weight:600"></span>
+                <button class="btn btn-ghost btn-sm" onclick="clearUpdateFile()">✕</button>
+              </div>
+              <div style="margin-top:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                <button class="btn btn-primary" id="upd-apply-btn" onclick="applyUpdateFile()" disabled>
+                  ⬆ Aplicar
+                </button>
+                <span id="upd-apply-msg" class="save-msg"></span>
+              </div>
+              <div id="upd-result" class="upd-result" style="display:none"></div>
+              <div class="upd-protected-bar">
+                <span class="upd-prot-lbl">🔒 Protegido:</span>
+                <code>content/</code><code>media/</code><code>backups/</code>
+                <code>public/</code><code>newsday-config.php</code>
+              </div>
+            </div>
+
+            <div class="upd-block" style="margin-top:14px">
+              <div class="upd-block-title">⬇ Exportar paquete</div>
+              <p class="upd-block-desc">
+                Descarga el código como <code>.zip</code> listo para aplicar en otro servidor.
+              </p>
+              <a class="btn btn-primary" href="newsday-api.php?action=export-update" target="_blank"
+                 onclick="toast('Generando paquete…')">
+                ⬇ Descargar paquete
+              </a>
+            </div>
+          </div>
+
+          <!-- Acerca de -->
+          <div class="aj-section aj-about">
+            <h3>ℹ Acerca de Newsday</h3>
+            <div class="about-card">
+              <div class="about-logo">News<span>day</span></div>
+              <div class="about-version">v1.0</div>
+            </div>
+            <p class="about-desc">CMS para publicaciones digitales. Genera HTML estático, sin base de datos, con panel de administración incluido.</p>
+            <div class="about-meta">
+              <div class="about-meta-row"><span class="about-meta-lbl">Versión</span><span class="about-meta-val">1.0</span></div>
+              <div class="about-meta-row"><span class="about-meta-lbl">Licencia</span><span class="about-meta-val">MIT</span></div>
+              <div class="about-meta-row"><span class="about-meta-lbl">Motor</span><span class="about-meta-val">PHP 8+ · HTML estático</span></div>
+              <div class="about-meta-row"><span class="about-meta-lbl">Historial</span><span class="about-meta-val">
+                v1.0 — Sistema de plugins, constructor visual con componentes extensibles<br>
+                v0.9.1 — Constructor visual de páginas, actualizaciones seguras<br>
+                v0.8 — Roles, lectores web, muro de pago<br>
+                v0.7 — Maquetar por tipo, plantillas guardadas<br>
+                v0.6 — Organizar v2, backup automático<br>
+                v0.5 — Dashboard, modo mantenimiento<br>
+                v0.4 — Bloque logo, plantillas de diseño
+              </span></div>
+            </div>
+          </div>
+
+        </div><!-- /col3 -->
+
+      </div><!-- /aj3-layout -->
+    </div>
+  </div>
+
+  <!-- ── USUARIOS ───────────────────────────────────────────── -->
+  <div id="tab-usuarios" class="tabpanel">
+    <div class="tab-scroll">
+      <div class="usr-layout">
+
+        <!-- ══ USUARIOS DEL PANEL ════════════════════════════ -->
+        <section class="usr-section">
+          <div class="usr-section-head">
+            <div>
+              <h2 class="usr-title">👑 Usuarios del panel</h2>
+              <p class="usr-hint">Cuentas con acceso al panel de administración. Solo el rol Administrador puede gestionar usuarios.</p>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="openPanelUserModal(null)">+ Nuevo usuario</button>
+          </div>
+
+          <!-- Descripción de roles -->
+          <div class="usr-roles-legend">
+            <div class="url-role-item"><span class="usr-role-badge role-admin">👑 Admin</span><span>Acceso completo</span></div>
+            <div class="url-role-item"><span class="usr-role-badge role-editor">✏️ Editor</span><span>Edita posts, publica</span></div>
+            <div class="url-role-item"><span class="usr-role-badge role-escritor">📝 Escritor</span><span>Sus propios posts</span></div>
+            <div class="url-role-item"><span class="usr-role-badge role-maquetador">🎨 Maquetador</span><span>Diseño y plantillas</span></div>
+            <div class="url-role-item"><span class="usr-role-badge role-publicista">📢 Publicista</span><span>Solo publicar</span></div>
+          </div>
+
+          <div id="panel-users-list" class="usr-list">
+            <div class="usr-empty">Cargando…</div>
+          </div>
+        </section>
+
+        <!-- ══ LECTORES WEB ═══════════════════════════════════ -->
+        <section class="usr-section">
+          <div class="usr-section-head">
+            <div>
+              <h2 class="usr-title">🌐 Lectores web</h2>
+              <p class="usr-hint">Usuarios registrados del sitio público. Pueden acceder a contenido exclusivo según su nivel.</p>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+              <button class="btn btn-ghost btn-sm" onclick="openImportReaders()">📥 Importar CSV</button>
+              <button class="btn btn-primary btn-sm" onclick="openReaderModal(null)">+ Nuevo lector</button>
+            </div>
+          </div>
+
+          <!-- Stats de lectores -->
+          <div id="readers-stats" class="rdr-stats-row"></div>
+
+          <!-- Barra de búsqueda y filtro -->
+          <div class="usr-filters">
+            <input type="text" id="rdr-search" class="sinp" placeholder="🔍 Buscar por nombre o email…"
+                   oninput="filterReaders()" style="flex:1;min-width:180px">
+            <select id="rdr-tier-filter" class="sinp" onchange="filterReaders()" style="width:140px">
+              <option value="">Todos los niveles</option>
+              <option value="free">🆓 Gratis</option>
+              <option value="subscriber">◆ Suscriptor</option>
+              <option value="premium">★ Premium</option>
+            </select>
+          </div>
+
+          <div id="readers-list" class="usr-list">
+            <div class="usr-empty">Cargando…</div>
+          </div>
+          <div id="readers-paginator" class="rdr-paginator"></div>
+
+          <!-- Portal de lectores -->
+          <div class="rdr-portal-hint">
+            <span>🔗 Portal de lectores:</span>
+            <a href="reader.php" target="_blank" class="rdr-portal-link">reader.php</a>
+            <span style="color:#94a3b8;font-size:11px">— Página de login, registro y perfil para lectores</span>
+          </div>
+        </section>
+
+        <!-- ══ NIVELES DE ACCESO AL CONTENIDO ════════════════ -->
+        <section class="usr-section">
+          <h2 class="usr-title">🔒 Niveles de acceso al contenido</h2>
+          <p class="usr-hint" style="margin-bottom:16px">Asigna un nivel de acceso a cada post desde la pestaña Escribir (selector junto al estado del post).</p>
+          <div class="access-levels-grid">
+            <div class="access-level-card al-public">
+              <div class="al-icon">🌐</div>
+              <div class="al-name">Público</div>
+              <div class="al-desc">Visible para todos. Se genera como HTML estático en <code>public/</code>.</div>
+            </div>
+            <div class="access-level-card al-members">
+              <div class="al-icon">👤</div>
+              <div class="al-name">Miembros</div>
+              <div class="al-desc">Solo lectores registrados (nivel Gratis o superior). Solo teaser en el índice.</div>
+            </div>
+            <div class="access-level-card al-subscriber">
+              <div class="al-icon">◆</div>
+              <div class="al-name">Suscriptor</div>
+              <div class="al-desc">Requiere nivel Suscriptor o Premium. Servido por <code>reader.php</code>.</div>
+            </div>
+            <div class="access-level-card al-premium">
+              <div class="al-icon">★</div>
+              <div class="al-name">Premium</div>
+              <div class="al-desc">Acceso exclusivo para lectores Premium. Máximo nivel de privacidad.</div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </div>
+
+</div><!-- /tabpanels -->
+
+<!-- ══ MODAL: USUARIO DEL PANEL ══════════════════════════════ -->
+<div class="modal-overlay" id="panel-user-modal" style="display:none">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3 id="pum-title">Nuevo usuario</h3>
+      <button class="mclose" onclick="hideModal('panel-user-modal')">×</button>
+    </div>
+    <input type="hidden" id="pum-id">
+    <div class="mf-row">
+      <label class="mf-lbl">Nombre de usuario *</label>
+      <input class="sinp" id="pum-username" placeholder="ej: redactor1" autocomplete="off">
+    </div>
+    <div class="mf-row">
+      <label class="mf-lbl">Nombre para mostrar</label>
+      <input class="sinp" id="pum-displayname" placeholder="ej: María García">
+    </div>
+    <div class="mf-row">
+      <label class="mf-lbl">Email</label>
+      <input class="sinp" id="pum-email" type="email" placeholder="opcional">
+    </div>
+    <div class="mf-row">
+      <label class="mf-lbl">Rol *</label>
+      <select class="sinp" id="pum-role" onchange="updateRoleDesc()">
+        <option value="escritor">📝 Escritor</option>
+        <option value="maquetador">🎨 Maquetador</option>
+        <option value="publicista">📢 Publicista</option>
+        <option value="editor">✏️ Editor</option>
+        <option value="admin">👑 Administrador</option>
+      </select>
+    </div>
+    <div class="mf-hint" id="pum-role-desc"></div>
+    <div class="mf-row">
+      <label class="mf-lbl">Contraseña <small>(vacío = no cambiar)</small></label>
+      <input class="sinp" id="pum-pass" type="password" placeholder="••••••••" autocomplete="new-password">
+    </div>
+    <div class="mf-err" id="pum-err" style="display:none"></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="hideModal('panel-user-modal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="savePanelUserForm()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: LECTOR WEB ══════════════════════════════════════ -->
+<div class="modal-overlay" id="reader-modal" style="display:none">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3 id="rdm-title">Nuevo lector</h3>
+      <button class="mclose" onclick="hideModal('reader-modal')">×</button>
+    </div>
+    <input type="hidden" id="rdm-id">
+    <div class="mf-row">
+      <label class="mf-lbl">Email *</label>
+      <input class="sinp" id="rdm-email" type="email" placeholder="lector@email.com">
+    </div>
+    <div class="mf-row">
+      <label class="mf-lbl">Nombre para mostrar</label>
+      <input class="sinp" id="rdm-displayname" placeholder="Nombre del lector">
+    </div>
+    <div class="mf-row">
+      <label class="mf-lbl">Nivel de acceso</label>
+      <select class="sinp" id="rdm-tier">
+        <option value="free">🆓 Gratis (miembro registrado)</option>
+        <option value="subscriber">◆ Suscriptor</option>
+        <option value="premium">★ Premium</option>
+      </select>
+    </div>
+    <div class="mf-row" style="align-items:center">
+      <label class="mf-lbl">Activo</label>
+      <input type="checkbox" id="rdm-active" checked style="width:auto;margin:0">
+    </div>
+    <div class="mf-row">
+      <label class="mf-lbl">Contraseña <small>(vacío = no cambiar / sin acceso propio)</small></label>
+      <input class="sinp" id="rdm-pass" type="password" placeholder="••••••••" autocomplete="new-password">
+    </div>
+    <div class="mf-row">
+      <label class="mf-lbl">Notas internas</label>
+      <textarea class="sinp" id="rdm-notes" rows="2" placeholder="Notas privadas sobre este lector…" style="resize:vertical"></textarea>
+    </div>
+    <div class="mf-err" id="rdm-err" style="display:none"></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="hideModal('reader-modal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveReaderForm()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: IMPORTAR LECTORES ══════════════════════════════ -->
+<div class="modal-overlay" id="import-readers-modal" style="display:none">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3>📥 Importar lectores (CSV)</h3>
+      <button class="mclose" onclick="hideModal('import-readers-modal')">×</button>
+    </div>
+    <p style="font-size:12px;color:#64748b;margin-bottom:10px">
+      Formato por línea: <code>email, nivel, nombre</code><br>
+      Nivel: <code>free</code> / <code>subscriber</code> / <code>premium</code> (por defecto: free)<br>
+      Ejemplo: <code>juan@email.com, subscriber, Juan López</code>
+    </p>
+    <textarea class="sinp" id="import-csv-text" rows="8" placeholder="email,tier,nombre&#10;user@email.com,free,Usuario&#10;vip@email.com,premium,VIP"
+              style="resize:vertical;font-family:monospace;font-size:12px"></textarea>
+    <div class="mf-err" id="import-err" style="display:none;margin-top:8px"></div>
+    <div style="color:#16a34a;font-size:13px;display:none;margin-top:8px" id="import-ok"></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="hideModal('import-readers-modal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="doImportReaders()">Importar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PROPS PANEL (fijo, solo visible en Maquetar) ══════════ -->
+<div id="props">
+  <h4>Bloque seleccionado</h4>
+  <div class="pr"><span class="pl">Tipo</span><span id="pr-type" style="font-weight:600;color:#334155">—</span></div>
+  <div class="pr"><span class="pl">Col</span><input class="pi" id="pr-col" type="number" min="1" onchange="setProp('col')"></div>
+  <div class="pr"><span class="pl">Fila</span><input class="pi" id="pr-row" type="number" min="1" onchange="setProp('row')"></div>
+  <div class="pr"><span class="pl">Columnas</span><input class="pi" id="pr-cs" type="number" min="1" onchange="setProp('colspan')"></div>
+  <div class="pr"><span class="pl">Filas</span><input class="pi" id="pr-rs" type="number" min="1" onchange="setProp('rowspan')"></div>
+  <div class="pr"><span class="pl">Texto</span><input class="pi" id="pr-txt" type="text" onchange="setProp('content')"></div>
+  <div class="pr"><span class="pl">Imagen</span>
+    <input class="pi" id="pr-media" type="text" placeholder="URL…" onchange="setProp('mediaUrl')">
+    <button class="tb" onclick="openMediaModal('block')" title="Seleccionar">🖼</button>
+  </div>
+  <div style="margin-top:8px">
+    <button class="btn btn-red" style="font-size:11px;padding:4px 8px;width:100%" onclick="delSelBlock()">🗑 Eliminar bloque</button>
+  </div>
+</div>
+
+<!-- ══ MODAL: GESTOR DE MEDIOS (inserción contextual) ════════ -->
+<div class="mov" id="media-modal">
+  <div class="modal wide">
+    <span class="mclose" onclick="closeMov('media-modal')">×</span>
+    <h2>🖼 Insertar medio</h2>
+    <div id="upload-zone"
+      onclick="document.getElementById('upload-file-input').click()"
+      ondragover="event.preventDefault();this.classList.add('drag')"
+      ondragleave="this.classList.remove('drag')"
+      ondrop="handleFileDrop(event)">
+      <div class="uz-ic">📁</div>
+      <p>Arrastra archivos aquí o haz clic para seleccionar</p>
+      <small>Imágenes · Audio · Vídeo · Docs (PDF)</small>
+      <div class="upload-progress" id="upload-progress"><div class="upload-bar" id="upload-bar"></div></div>
+    </div>
+    <input type="file" id="upload-file-input" multiple
+      accept="image/*,audio/*,video/*,.pdf,.doc,.docx"
+      onchange="handleFileSelect(event)">
+    <div id="media-tabs">
+      <button class="mtab on" onclick="filterMedia('all',this)">Todos</button>
+      <button class="mtab" onclick="filterMedia('images',this)">Imágenes</button>
+      <button class="mtab" onclick="filterMedia('audio',this)">Audio</button>
+      <button class="mtab" onclick="filterMedia('video',this)">Vídeo</button>
+      <button class="mtab" onclick="filterMedia('docs',this)">Docs</button>
+    </div>
+    <div id="media-grid"></div>
+    <div id="media-actions">
+      <span id="media-info">Sin selección</span>
+      <button class="btn btn-ghost" onclick="copyMediaUrl()" id="btn-copy-url" disabled>📋 Copiar URL</button>
+      <button class="btn btn-primary" onclick="insertMedia()" id="btn-insert-media" disabled>Insertar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TOAST ══════════════════════════════════════════════════ -->
+<div id="toast"></div>
+
+<!-- ══ MÓDULOS JS (orden de dependencia) ═════════════════════ -->
+<script src="admin/js/i18n.js"></script>
+<script src="admin/js/offline-store.js"></script>
+<script src="admin/js/nd-registry.js"></script>
+<script src="admin/js/core.js"></script>
+<script src="admin/js/posts.js"></script>
+<script src="admin/js/grid.js"></script>
+<script src="admin/js/media.js"></script>
+<script src="admin/js/design.js"></script>
+<script src="admin/js/organizar.js"></script>
+<script src="admin/js/modelar.js"></script>
+<script src="admin/js/pagebuilder.js"></script>
+<script src="admin/js/pages.js"></script>
+<script src="admin/js/publish.js"></script>
+<script src="admin/js/plugins.js"></script>
+<script src="admin/js/dashboard.js"></script>
+<script src="admin/js/users.js"></script>
+<script src="admin/js/tabs.js"></script>
+
+</body>
+</html>

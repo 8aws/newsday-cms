@@ -1,0 +1,16 @@
+{
+  "id": "post-list",
+  "name": "Lista de posts",
+  "version": "1.0.0",
+  "description": "Muestra una cuadrícula o lista de artículos recientes, con filtro por etiqueta y tres estilos de presentación.",
+  "author": "Newsday",
+  "type": "component",
+  "components": [
+    {
+      "type": "post-list",
+      "ic": "📰",
+      "lb": "Lista de posts",
+      "hint": "Grid, lista o magazine de artículos recientes"
+    }
+  ]
+}

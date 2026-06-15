@@ -1,0 +1,29 @@
+{
+  "siteName": "Mi Newsday",
+  "baseUrl": "https://mi-sitio.com",
+  "theme": "newsday",
+  "_primaryLang": "es",
+  "siteStructure": {
+    "homepage": "posts",
+    "homepageRef": "",
+    "activePortada": ""
+  },
+  "nav": [
+    { "label": "Inicio",   "type": "home",   "target": "" },
+    { "label": "Archivo",  "type": "url",    "target": "/archivo" },
+    { "label": "Contacto", "type": "url",    "target": "/contacto" }
+  ],
+  "headerBlocks": [],
+  "footerBlocks": [],
+  "adZones": [],
+  "blockAssignments": {},
+  "maintenance": { "active": false, "page": "" },
+  "readerAuth": {
+    "allowRegister": true,
+    "requireEmailVerify": false
+  },
+  "autoBackup": {
+    "enabled": false,
+    "keepDays": 7
+  }
+}

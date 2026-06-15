@@ -1,0 +1,16 @@
+{
+  "id": "post-categories",
+  "name": "Categorías / Etiquetas",
+  "version": "1.0.0",
+  "description": "Muestra las etiquetas del sitio como categorías navegables: pills, tarjetas o lista.",
+  "author": "Newsday",
+  "type": "component",
+  "components": [
+    {
+      "type": "post-categories",
+      "ic": "🏷",
+      "lb": "Categorías",
+      "hint": "Etiquetas del sitio como categorías navegables"
+    }
+  ]
+}

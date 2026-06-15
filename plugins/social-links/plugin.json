@@ -1,0 +1,9 @@
+{
+  "id": "social-links",
+  "name": "Redes sociales",
+  "version": "1.0.0",
+  "description": "Iconos y enlaces a perfiles de redes sociales.",
+  "author": "Newsday",
+  "type": "component",
+  "components": [{ "type": "social-links", "ic": "📱", "lb": "Redes sociales", "hint": "Iconos de redes sociales con enlaces" }]
+}

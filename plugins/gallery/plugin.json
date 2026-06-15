@@ -1,0 +1,16 @@
+{
+  "id": "gallery",
+  "name": "Galería de imágenes",
+  "version": "1.0.0",
+  "description": "Cuadrícula de imágenes con lightbox CSS puro, sin dependencias externas.",
+  "author": "Newsday",
+  "type": "component",
+  "components": [
+    {
+      "type": "gallery",
+      "ic": "🖼",
+      "lb": "Galería",
+      "hint": "Cuadrícula de imágenes con lightbox"
+    }
+  ]
+}

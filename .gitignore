@@ -1,0 +1,40 @@
+# ── Secretos / configuración de instalación ──────────────────
+newsday-config.php
+newsday-config.php.bak
+
+# ── Contenido y datos de cada instalación (no se versionan) ───
+/content/posts/
+/content/pages/
+/content/panel-users/
+/content/readers/
+/content/layouts/
+/content/site-config.json
+/content/plugins-state.json
+
+# ── Media subida por el usuario ──────────────────────────────
+/media/images/
+/media/audio/
+/media/video/
+/media/docs/
+/media/media-index.json
+
+# ── Generados / temporales ───────────────────────────────────
+/public/
+/preview/
+/backups/*
+!/backups/.htaccess
+
+# ── Archivos y artefactos ────────────────────────────────────
+*.zip
+
+# ── Sistema operativo / editores ─────────────────────────────
+.DS_Store
+**/.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# ── Específicos de despliegue/cliente (no se versionan) ──────
+docker-compose.cosmos.yml
+temas/uverse.php

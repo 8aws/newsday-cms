@@ -1,0 +1,16 @@
+{
+  "id": "slider",
+  "name": "Slider / Carrusel",
+  "version": "1.0.0",
+  "description": "Carrusel de diapositivas con scroll-snap CSS. Sin dependencias externas.",
+  "author": "Newsday",
+  "type": "component",
+  "components": [
+    {
+      "type": "slider",
+      "ic": "🎠",
+      "lb": "Slider",
+      "hint": "Carrusel de imágenes o slides"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "id": "post-tags",
+  "name": "Nube de etiquetas",
+  "version": "1.0.0",
+  "description": "Nube, lista o pills de etiquetas del sitio, con tamaño proporcional al número de posts.",
+  "author": "Newsday",
+  "type": "component",
+  "components": [
+    {
+      "type": "post-tags",
+      "ic": "☁",
+      "lb": "Nube de etiquetas",
+      "hint": "Nube, lista o pills de etiquetas del sitio"
+    }
+  ]
+}

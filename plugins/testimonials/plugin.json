@@ -1,0 +1,16 @@
+{
+  "id": "testimonials",
+  "name": "Testimonios",
+  "version": "1.0.0",
+  "description": "Citas y testimonios de clientes en cuadrícula o lista.",
+  "author": "Newsday",
+  "type": "component",
+  "components": [
+    {
+      "type": "testimonials",
+      "ic": "💬",
+      "lb": "Testimonios",
+      "hint": "Citas de clientes en tarjetas"
+    }
+  ]
+}

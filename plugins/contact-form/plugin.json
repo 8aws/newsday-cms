@@ -1,0 +1,9 @@
+{
+  "id": "contact-form",
+  "name": "Formulario de contacto",
+  "version": "1.0.0",
+  "description": "Formulario de contacto con campos configurables. Envío vía mailto o Formspree.",
+  "author": "Newsday",
+  "type": "component",
+  "components": [{ "type": "contact-form", "ic": "📋", "lb": "Contacto", "hint": "Formulario de contacto configurable" }]
+}
