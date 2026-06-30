@@ -20,6 +20,10 @@ function updateProtectedPaths(): array {
         'preview'           . DIRECTORY_SEPARATOR,
         'newsday-config.php',
         'newsday-config.php.bak',
+        // .htaccess: configuración del servidor, propia de cada instalación.
+        // Las instalaciones nuevas lo reciben del zip completo, pero los
+        // updates NO lo sobrescriben (puede tener reglas de proxy/HTTPS/caché).
+        '.htaccess',
         // Favicons publicados en la raíz: son de cada instalación
         'favicon.ico',
         'favicon-16x16.png',

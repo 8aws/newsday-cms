@@ -14,8 +14,9 @@
 #  modo que aplicarlo desde cualquier versión previa deja la instalación al día.
 #
 #  Uso:
-#    tools/release.sh            # genera los dos ZIP en dist/
-#    tools/release.sh --docker   # además construye la imagen Docker
+#    tools/release.sh             # genera los dos ZIP en dist/
+#    tools/release.sh --docker    # además construye la imagen Docker
+#    tools/release.sh --publish   # crea el tag vX.Y.Z y la GitHub Release
 # ════════════════════════════════════════════════════════════════
 set -euo pipefail
 
@@ -28,7 +29,14 @@ VERSION="$(tr -d '[:space:]' < VERSION)"
 DIST="$ROOT/dist"
 DATE="$(date +%Y-%m-%d)"
 BUILD_DOCKER=0
-[ "${1:-}" = "--docker" ] && BUILD_DOCKER=1
+PUBLISH=0
+for arg in "$@"; do
+  case "$arg" in
+    --docker)  BUILD_DOCKER=1 ;;
+    --publish) PUBLISH=1 ;;
+    *) echo "✗ Flag desconocido: $arg"; exit 1 ;;
+  esac
+done
 
 # Aviso si hay cambios sin commitear (el build usa HEAD, no el working tree)
 if ! git diff --quiet HEAD 2>/dev/null; then
@@ -71,5 +79,43 @@ if [ "$BUILD_DOCKER" = "1" ]; then
   fi
 fi
 
-echo "▶ Listo. Artefactos en dist/:"
+echo "▶ Artefactos en dist/:"
 ls -lh "$DIST"
+
+# ── 4. GitHub Release (opcional) ──────────────────────────────────
+if [ "$PUBLISH" = "1" ]; then
+  command -v gh >/dev/null 2>&1 || { echo "✗ gh (GitHub CLI) no disponible"; exit 1; }
+
+  TAG="v$VERSION"
+
+  # El release debe reflejar HEAD: avisar si hay cambios sin commitear
+  if ! git diff --quiet HEAD 2>/dev/null; then
+    echo "✗ Hay cambios sin commitear; commitea antes de publicar el release."; exit 1
+  fi
+
+  # Crear y subir el tag si no existe
+  if ! git rev-parse "$TAG" >/dev/null 2>&1; then
+    git tag -a "$TAG" -m "Newsday $VERSION"
+    git push origin "$TAG"
+    echo "  ✓ tag $TAG creado y subido"
+  else
+    echo "  • tag $TAG ya existe; reutilizando"
+  fi
+
+  NOTES="Newsday $VERSION ($DATE)
+
+- \`newsday-$VERSION.zip\` — instalación completa (descomprime en el servidor → instalador automático).
+- \`newsday-update-$VERSION.zip\` — update acumulativo (panel → Ajustes → Actualizar). No toca datos, config ni .htaccess; crea rollback automático."
+
+  if gh release view "$TAG" >/dev/null 2>&1; then
+    gh release upload "$TAG" "$DIST/newsday-$VERSION.zip" "$DIST/newsday-update-$VERSION.zip" --clobber
+    echo "  ✓ assets actualizados en la release $TAG"
+  else
+    gh release create "$TAG" \
+      "$DIST/newsday-$VERSION.zip" "$DIST/newsday-update-$VERSION.zip" \
+      --title "Newsday $VERSION" --notes "$NOTES"
+    echo "  ✓ GitHub Release $TAG creada"
+  fi
+fi
+
+echo "▶ Listo."
