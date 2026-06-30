@@ -1,0 +1,16 @@
+{
+  "id": "botones",
+  "name": "Grupo de Botones Ultra Custom",
+  "version": "1.1.0",
+  "description": "Componente avanzado de botones con formas libres (pill, oval, castillo, square), degradados, fuentes independientes y control total de sombras.",
+  "author": "espiralvex.dev",
+  "type": "component",
+  "components": [
+    {
+      "type": "botones",
+      "ic": "🫵",
+      "lb": "Botones Pro",
+      "hint": "Botones con formas libres, degradados, iconos en cualquier posición y fuentes a elegir"
+    }
+  ]
+}

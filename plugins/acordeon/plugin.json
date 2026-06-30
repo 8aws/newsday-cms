@@ -1,0 +1,16 @@
+{
+  "id": "acordeon",
+  "name": "Acordeón Avanzado",
+  "version": "1.2.0",
+  "description": "Componente de acordeón con diseño personalizable y soporte para datos dinámicos del CMS.",
+  "author": "Tu Nombre",
+  "type": "component",
+  "components": [
+    {
+      "type": "acordeon",
+      "ic": "🪗",
+      "lb": "Acordeón Pro",
+      "hint": "Lista colapsable manual o dinámica (Posts, Categorías, Tags)"
+    }
+  ]
+}

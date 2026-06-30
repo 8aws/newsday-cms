@@ -1,0 +1,16 @@
+{
+  "id": "pricing_table",
+  "name": "Tabla de Precios Pro",
+  "version": "1.1.5",
+  "description": "Módulo de comparación de planes y tarifas con opción de destacar elementos, control de bordes, degradados y brillo neón.",
+  "author": "Uverse Design",
+  "type": "component",
+  "components": [
+    {
+      "type": "pricing_table",
+      "ic": "⚡",
+      "lb": "Precios / Planes",
+      "hint": "Tabla comparativa de tarifas con control de diseño libre por columna"
+    }
+  ]
+}

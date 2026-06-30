@@ -1,0 +1,16 @@
+{
+  "id": "before_after",
+  "name": "Comparador Antes / Después",
+  "version": "1.0.0",
+  "description": "Componente interactivo con slider deslizante horizontal para comparar dos variantes de pantalla o imagen.",
+  "author": "Uverse Design",
+  "type": "component",
+  "components": [
+    {
+      "type": "before_after",
+      "ic": "🎚️",
+      "lb": "Antes / Después",
+      "hint": "Deslizador interactivo para comparar dos imágenes superpuestas"
+    }
+  ]
+}

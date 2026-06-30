@@ -1,0 +1,16 @@
+{
+  "id": "timeline",
+  "name": "Roadmap / Línea de Tiempo",
+  "version": "1.1.0",
+  "description": "Eje secuencial interactivo para hitos de desarrollo, fases de producto e históricos con iluminación neón independiente.",
+  "author": "Uverse Design",
+  "type": "component",
+  "components": [
+    {
+      "type": "timeline",
+      "ic": "⏱️",
+      "lb": "Línea de Tiempo",
+      "hint": "Crea una secuencia lineal de fases con estados personalizables"
+    }
+  ]
+}

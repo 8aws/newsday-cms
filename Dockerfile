@@ -4,8 +4,14 @@
 
 FROM php:8.3-apache
 
-# Extensiones PHP necesarias para Newsday
-RUN docker-php-ext-install zip
+# Dependencias del sistema para las extensiones PHP
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        libzip-dev libpng-dev libjpeg-dev libfreetype6-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Extensiones PHP necesarias para Newsday (zip para backups/updates, gd para imágenes)
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install zip gd
 
 # Activar mod_rewrite (necesario para el .htaccess de Newsday)
 RUN a2enmod rewrite

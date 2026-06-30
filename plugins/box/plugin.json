@@ -1,0 +1,16 @@
+{
+  "id": "box",
+  "name": "Box Contenedor Premium",
+  "version": "1.1.0",
+  "description": "Componente de bloque avanzado para encuadrar contenidos, crear tarjetas de servicios, destacados y cajas de texto estilizadas.",
+  "author": "espiralvex.dev",
+  "type": "component",
+  "components": [
+    {
+      "type": "box",
+      "ic": "📦",
+      "lb": "Caja / Box",
+      "hint": "Contenedor estilizado con título, cuerpo y decoración avanzada"
+    }
+  ]
+}

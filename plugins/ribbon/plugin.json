@@ -1,0 +1,16 @@
+{
+  "id": "ribbon",
+  "name": "Ribbon Pro Destacados",
+  "version": "1.0.0",
+  "description": "Componente para crear cintas informativas, alertas avanzadas y banners con formas personalizadas, degradados y botones de acción.",
+  "author": "espiralvex.dev",
+  "type": "component",
+  "components": [
+    {
+      "type": "ribbon",
+      "ic": "🎗️",
+      "lb": "Ribbon / Banner",
+      "hint": "Cinta o banner destacado personalizable para alertas o anuncios"
+    }
+  ]
+}

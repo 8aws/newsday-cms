@@ -1,0 +1,16 @@
+{
+  "id": "plugin-example",
+  "name": "Plugin de ejemplo",
+  "version": "1.0.0",
+  "description": "Plantilla de referencia para crear plugins. Demuestra el contrato completo (campos, render, CSS). Úsalo como punto de partida o para probar el sistema de plugins.",
+  "author": "Newsday",
+  "type": "component",
+  "components": [
+    {
+      "type": "plugin-example",
+      "ic": "🧪",
+      "lb": "Ejemplo",
+      "hint": "Componente de demostración para desarrollar y probar plugins"
+    }
+  ]
+}
