@@ -31,12 +31,17 @@ function updateProtectedPaths(): array {
 }
 
 // ── Normalizar separador y limpiar ruta de un entry del ZIP ───
+// Normaliza por segmentos: descarta segmentos vacíos (slash inicial/doble),
+// "." y ".." (traversal). Preserva dotfiles legítimos como .htaccess y
+// .gitignore — un ltrim de "." los rompía escribiéndolos sin el punto.
 function updateNormPath(string $raw): string {
-    // Eliminar rutas absolutas o traversal
-    $p = str_replace(['\\', '/'], DIRECTORY_SEPARATOR, $raw);
-    $p = ltrim($p, DIRECTORY_SEPARATOR . '.');
-    $p = preg_replace('/\.\.+' . preg_quote(DIRECTORY_SEPARATOR, '/') . '/', '', $p);
-    return $p;
+    $p     = str_replace('\\', '/', $raw);
+    $parts = [];
+    foreach (explode('/', $p) as $seg) {
+        if ($seg === '' || $seg === '.' || $seg === '..') continue;
+        $parts[] = $seg;
+    }
+    return implode(DIRECTORY_SEPARATOR, $parts);
 }
 
 // ── Comprobar si una ruta está protegida ──────────────────────
@@ -103,6 +108,10 @@ function applyUpdate(): void {
 
         $norm = updateNormPath($entry);
         if ($norm === '' || $norm === DIRECTORY_SEPARATOR) continue;
+
+        // El manifiesto del paquete no se escribe en la instalación
+        // (se usa para metadatos de la actualización, no es código).
+        if ($norm === 'newsday-update.json') continue;
 
         // ¿Es directorio vacío?
         if (str_ends_with($entry, '/') || str_ends_with($entry, '\\')) continue;
