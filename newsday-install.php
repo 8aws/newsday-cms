@@ -11,7 +11,11 @@
  */
 ob_start(); // Buffer de salida: permite enviar headers (sesión, redirect) aunque haya whitespace
 
-define('ND_VERSION', '0.8');
+// Versión: fuente única en el archivo VERSION de la raíz.
+$ndVersionFile = __DIR__ . '/VERSION';
+define('ND_VERSION', is_file($ndVersionFile)
+    ? trim((string)file_get_contents($ndVersionFile))
+    : '1.1.0');
 
 // ── Detección de instalación previa ───────────────────────────
 $configFile       = __DIR__ . '/newsday-config.php';

@@ -18,11 +18,20 @@ newsday-config.php.bak
 /media/docs/
 /media/media-index.json
 
+# ── Favicons publicados en la raíz (por instalación) ─────────
+/favicon.ico
+/favicon-16x16.png
+/favicon-32x32.png
+/apple-touch-icon.png
+/icon-192.png
+/icon-512.png
+
 # ── Generados / temporales ───────────────────────────────────
 /public/
 /preview/
 /backups/*
 !/backups/.htaccess
+/dist/
 
 # ── Archivos y artefactos ────────────────────────────────────
 *.zip

@@ -20,6 +20,13 @@ function updateProtectedPaths(): array {
         'preview'           . DIRECTORY_SEPARATOR,
         'newsday-config.php',
         'newsday-config.php.bak',
+        // Favicons publicados en la raíz: son de cada instalación
+        'favicon.ico',
+        'favicon-16x16.png',
+        'favicon-32x32.png',
+        'apple-touch-icon.png',
+        'icon-192.png',
+        'icon-512.png',
     ];
 }
 

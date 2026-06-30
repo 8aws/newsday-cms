@@ -75,7 +75,11 @@
 
 ob_start();
 
-define('NEWSDAY_VERSION', '1.0');
+// Versión: fuente única en el archivo VERSION de la raíz.
+$ndVersionFile = __DIR__ . '/VERSION';
+define('NEWSDAY_VERSION', is_file($ndVersionFile)
+    ? trim((string)file_get_contents($ndVersionFile))
+    : '1.1.0');
 
 // ── CORS ──────────────────────────────────────────────────────
 // Solo se reflejan orígenes de confianza (mismo host o lista explícita en

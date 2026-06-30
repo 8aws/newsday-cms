@@ -15,7 +15,14 @@
 
 if (!defined('DIR_CONTENT'))  define('DIR_CONTENT',  __DIR__ . '/../content');
 if (!defined('DIR_PUBLIC'))   define('DIR_PUBLIC',   __DIR__ . '/../public');
+if (!defined('DIR_ROOT'))     define('DIR_ROOT',     realpath(__DIR__ . '/..') ?: (__DIR__ . '/..'));
 define('DIR_FAVICONS', DIR_CONTENT . '/favicons');
+
+// Archivos de favicon que se publican (en la raíz y en public/)
+const FAVICON_PUBLISHED_FILES = [
+    'favicon.ico', 'favicon-16x16.png', 'favicon-32x32.png',
+    'apple-touch-icon.png', 'icon-192.png', 'icon-512.png',
+];
 
 // ════════════════════════════════════════════════════════════════
 //  GET — estado actual
@@ -115,11 +122,32 @@ function saveFavicon(): void {
         _faviconMakeIco(DIR_FAVICONS . '/favicon-32x32.png')
     );
 
+    // Publicar en la raíz de la instalación para que el navegador descubra
+    // /favicon.ico automáticamente (panel admin y sitio servido desde la raíz).
+    copyFaviconsToRoot();
+
     $mtime = filemtime(DIR_FAVICONS . '/favicon-32x32.png');
     sendJSON([
         'ok'      => true,
         'preview' => "newsday-api.php?action=favicon-preview&_={$mtime}",
     ]);
+}
+
+/** Copia los favicons generados a la raíz de la instalación. */
+function copyFaviconsToRoot(): void {
+    if (!is_dir(DIR_FAVICONS)) return;
+    foreach (FAVICON_PUBLISHED_FILES as $f) {
+        $src = DIR_FAVICONS . "/$f";
+        if (is_file($src)) @copy($src, DIR_ROOT . "/$f");
+    }
+}
+
+/** Elimina los favicons publicados en la raíz de la instalación. */
+function deleteFaviconsFromRoot(): void {
+    foreach (FAVICON_PUBLISHED_FILES as $f) {
+        $p = DIR_ROOT . "/$f";
+        if (is_file($p)) @unlink($p);
+    }
 }
 
 /** Carga una imagen GD a partir de su MIME type */
@@ -204,6 +232,7 @@ function serveFaviconPreview(): void {
 //  DELETE
 // ════════════════════════════════════════════════════════════════
 function deleteFavicon(): void {
+    deleteFaviconsFromRoot();
     if (!is_dir(DIR_FAVICONS)) { sendJSON(['ok' => true]); return; }
     foreach (scandir(DIR_FAVICONS) as $f) {
         if ($f === '.' || $f === '..') continue;
