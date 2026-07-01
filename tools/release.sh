@@ -66,9 +66,11 @@ git archive HEAD | tar -x -C "$STAGE"
 
 cat > "$STAGE/newsday-update.json" <<JSON
 {
+  "name": "Newsday",
   "version": "$VERSION",
   "date": "$DATE",
   "type": "cumulative",
+  "minUpgradeFrom": "${NEWSDAY_MIN_UPGRADE_FROM:-}",
   "generatedBy": "tools/release.sh"
 }
 JSON

@@ -86,6 +86,41 @@ function applyUpdate(): void {
         return;
     }
 
+    // ── Verificación de versión/compatibilidad ────────────────────
+    // El paquete lleva newsday-update.json con la versión destino.
+    $manifest    = null;
+    $mIdx        = $zip->locateName('newsday-update.json', ZipArchive::FL_NOCASE);
+    if ($mIdx !== false) {
+        $manifest = json_decode((string)$zip->getFromIndex($mIdx), true);
+    }
+    $fromVersion = defined('NEWSDAY_VERSION') ? NEWSDAY_VERSION : '0';
+    $toVersion   = is_array($manifest) ? ($manifest['version'] ?? null) : null;
+    $force       = !empty($_GET['force']) || !empty($_POST['force']);
+
+    if ($toVersion !== null) {
+        // Guarda de downgrade: no instalar una versión anterior sin forzar
+        if (version_compare($toVersion, $fromVersion, '<') && !$force) {
+            $zip->close();
+            sendJSON([
+                'error' => "El paquete es la versión $toVersion, anterior a la instalada ($fromVersion). "
+                         . "Añade force=1 si de verdad quieres bajar de versión.",
+                'from'  => $fromVersion, 'to' => $toVersion, 'downgrade' => true,
+            ], 409);
+            return;
+        }
+        // Guarda de ruta de actualización: exige una versión mínima de partida
+        $minFrom = $manifest['minUpgradeFrom'] ?? '';
+        if ($minFrom && version_compare($fromVersion, $minFrom, '<') && !$force) {
+            $zip->close();
+            sendJSON([
+                'error' => "Este update requiere partir de la versión $minFrom o superior "
+                         . "(tienes $fromVersion). Actualiza primero a una intermedia.",
+                'from'  => $fromVersion, 'to' => $toVersion, 'minUpgradeFrom' => $minFrom,
+            ], 409);
+            return;
+        }
+    }
+
     $updated   = [];   // archivos actualizados
     $skipped   = [];   // archivos protegidos ignorados
     $errors    = [];   // errores de escritura
@@ -171,6 +206,8 @@ function applyUpdate(): void {
 
     sendJSON([
         'ok'       => true,
+        'from'     => $fromVersion,
+        'to'       => $toVersion,
         'updated'  => $updated,
         'skipped'  => $skipped,
         'errors'   => $errors,
