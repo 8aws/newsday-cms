@@ -19,7 +19,7 @@
 #    tools/release.sh --docker-push # construye y publica la imagen en Docker Hub
 #    tools/release.sh --publish     # crea el tag vX.Y.Z y la GitHub Release
 #
-#  Repo de Docker Hub configurable con NEWSDAY_DOCKER_REPO (def: 8aws/newsday).
+#  Repo de Docker Hub configurable con NEWSDAY_DOCKER_REPO (def: espiralvex/newsday).
 #  El push requiere haber hecho `docker login` previamente.
 # ════════════════════════════════════════════════════════════════
 set -euo pipefail
@@ -32,7 +32,7 @@ VERSION="$(tr -d '[:space:]' < VERSION)"
 
 DIST="$ROOT/dist"
 DATE="$(date +%Y-%m-%d)"
-DOCKER_REPO="${NEWSDAY_DOCKER_REPO:-8aws/newsday}"
+DOCKER_REPO="${NEWSDAY_DOCKER_REPO:-espiralvex/newsday}"
 BUILD_DOCKER=0
 DOCKER_PUSH=0
 PUBLISH=0
