@@ -244,7 +244,12 @@ function buildPaywallTeaserPage(
     $sn         = htmlspecialchars($siteName);
     $lang       = htmlspecialchars($siteCfg['_primaryLang'] ?? 'es');
     $homeHref   = relHome($baseUrl, 1);
-    $readerUrl  = 'reader.php?action=content&slug=' . rawurlencode($meta['slug'] ?? '');
+    // reader.php vive en la raíz de la instalación; la página del post está en
+    // public/<slug>/index.html, dos niveles por debajo → ../../reader.php.
+    $slug       = $meta['slug'] ?? '';
+    $slugJson   = json_encode($slug);
+    $returnPath = 'public/' . $slug . '/';
+    $loginUrl   = '../../reader.php?page=login&return=' . rawurlencode($returnPath);
 
     $accessLabel = match($access) {
         'premium'    => '★ Contenido Premium',
@@ -262,7 +267,7 @@ function buildPaywallTeaserPage(
         'members' => 'Registrarme gratis',
         default   => 'Acceder con mi cuenta',
     };
-    $registerUrl = 'reader.php?page=register';
+    $registerUrl = '../../reader.php?page=register';
 
     $hBlocks     = $siteCfg['headerBlocks'] ?? [];
     $fBlocks     = $siteCfg['footerBlocks'] ?? [];
@@ -301,6 +306,8 @@ body{font-family:var(--th-body-font,Georgia,serif);background:var(--th-body-bg,#
 .nd-btn-reg:hover{background:#e2e8f0}
 .nd-back{display:inline-block;margin:0 40px 24px;font-size:13px;color:var(--th-accent,#5068e8);text-decoration:none}
 .nd-back:hover{text-decoration:underline}
+.nd-post-body{padding:8px 40px 40px;font-size:16px;line-height:1.75}
+.nd-post-body p{margin:0 0 16px}.nd-post-body img{max-width:100%;height:auto}
 a{color:var(--th-accent,#5068e8)}
 .nd-nav{display:flex;gap:16px;flex-wrap:wrap;align-items:center}
 .nd-nav a{color:inherit;text-decoration:none;font-size:13px;font-weight:500}.nd-nav a:hover{opacity:.75}
@@ -317,18 +324,40 @@ a{color:var(--th-accent,#5068e8)}
     <span class="nd-access-badge">{$accessLabel}</span>
   </div>
 </div>
-<div class="nd-paywall">
+<div class="nd-paywall" id="nd-locked">
   <div class="nd-paywall-icon">🔒</div>
   <div class="nd-paywall-title">{$accessLabel}</div>
   <div class="nd-paywall-desc">{$accessDesc}</div>
   <div class="nd-paywall-btns">
-    <a href="{$readerUrl}" class="nd-btn-login">Acceder con mi cuenta</a>
+    <a href="{$loginUrl}" class="nd-btn-login">Acceder con mi cuenta</a>
     <a href="{$registerUrl}" class="nd-btn-reg">{$btnLabel}</a>
   </div>
 </div>
+<div id="nd-unlocked" class="nd-post-body" style="display:none"></div>
 <a href="{$homeHref}" class="nd-back">← Volver al inicio</a>
 {$globalFooter}
 </div>
+<script>
+// Si el lector ya está autenticado y su tier da acceso, se carga el
+// contenido completo inline (reader.php lo sirve tras validar el tier).
+(function(){
+  var slug={$slugJson}, base='../../reader.php';
+  fetch(base+'?action=check',{credentials:'include'})
+    .then(function(r){return r.json();})
+    .then(function(s){
+      if(!s || !s.auth) return;                 // sin sesión → se mantiene el teaser
+      return fetch(base+'?action=content&slug='+encodeURIComponent(slug),{credentials:'include'})
+        .then(function(r){return r.ok? r.json():null;})
+        .then(function(d){
+          if(d && d.content){
+            var l=document.getElementById('nd-locked'); if(l) l.style.display='none';
+            var u=document.getElementById('nd-unlocked');
+            u.innerHTML=d.content; u.style.display='';
+          }
+        });
+    }).catch(function(){});
+})();
+</script>
 <!-- Newsday v0.8 · {$date_gen} -->
 </body>
 </html>

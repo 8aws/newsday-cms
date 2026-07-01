@@ -390,7 +390,10 @@ function doLogin() {
   err.style.display='none';
   if(!e||!p){err.textContent='Completa todos los campos';err.style.display='block';return;}
   rdPost('reader.php?action=login',{email:e,pass:p},function(d){
-    window.location.href='reader.php';
+    var ret=new URLSearchParams(location.search).get('return');
+    // Solo rutas relativas internas (evita open-redirect a sitios externos)
+    var safe = ret && ret.indexOf('//')===-1 && ret[0]!=='/' && ret.indexOf(':')===-1;
+    window.location.href = safe ? ret : 'reader.php';
   },function(msg){
     err.textContent=msg;err.style.display='block';
   });
