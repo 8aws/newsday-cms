@@ -124,6 +124,24 @@ function installPlugin(): void {
         sendJSON(['error' => 'ID de plugin inválido'], 400); return;
     }
 
+    // ── Versión: comparar con lo ya instalado ─────────────────────
+    $incomingVersion = (string)($manifest['version'] ?? '0');
+    $existing        = pluginReadManifest($pluginId);
+    $prevVersion     = $existing['version'] ?? null;
+    $force           = !empty($_GET['force']) || !empty($_POST['force']);
+
+    if ($prevVersion !== null
+        && version_compare($incomingVersion, $prevVersion, '<') && !$force) {
+        $zip->close();
+        sendJSON([
+            'error' => "El plugin '$pluginId' instalado es la versión $prevVersion; "
+                     . "el paquete es anterior ($incomingVersion). Añade force=1 para bajar de versión.",
+            'id'    => $pluginId, 'from' => $prevVersion, 'to' => $incomingVersion,
+            'downgrade' => true,
+        ], 409);
+        return;
+    }
+
     $destDir = DIR_PLUGINS . "/$pluginId";
     if (!is_dir($destDir)) mkdir($destDir, 0755, true);
 
@@ -169,7 +187,20 @@ function installPlugin(): void {
         pluginsWriteState($state);
     }
 
-    sendJSON(['ok' => true, 'id' => $pluginId, 'extracted' => count($extracted)]);
+    $action = $prevVersion === null
+        ? 'installed'
+        : (version_compare($incomingVersion, $prevVersion, '>') ? 'updated'
+          : (version_compare($incomingVersion, $prevVersion, '==') ? 'reinstalled' : 'downgraded'));
+
+    sendJSON([
+        'ok'        => true,
+        'id'        => $pluginId,
+        'name'      => $manifest['name'] ?? $pluginId,
+        'action'    => $action,
+        'from'      => $prevVersion,
+        'to'        => $incomingVersion,
+        'extracted' => count($extracted),
+    ]);
 }
 
 // ════════════════════════════════════════════════════════════════
