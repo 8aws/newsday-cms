@@ -4,10 +4,13 @@ RewriteEngine On
 # ── Seguridad: bloquear acceso directo a carpetas privadas ────
 RewriteRule ^(content|backups)/ - [F,L]
 
-# ── Primera ejecución: redirigir al instalador ────────────────
-# Si no existe newsday-config.php Y no estamos ya en el instalador o la API,
-# redirigir automáticamente a newsday-install.php
-RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI}/../newsday-config.php !-f
-RewriteCond %{REQUEST_URI} !newsday-install\.php [NC]
-RewriteCond %{REQUEST_URI} !newsday-api\.php [NC]
-RewriteRule ^ newsday-install.php [R=302,L]
+# ── Primera ejecución: servir el instalador ───────────────────
+# Mientras no exista newsday-config.php (y no se pida ya el instalador o
+# la API), servir el instalador con un rewrite INTERNO. El rewrite interno
+# evita el Location malformado del redirect externo; el instalador es
+# autocontenido. index.php aplica el mismo guard para la home con __DIR__
+# (válido también en subdirectorio).
+RewriteCond %{DOCUMENT_ROOT}/newsday-config.php !-f
+RewriteCond %{REQUEST_URI} !/newsday-install\.php$ [NC]
+RewriteCond %{REQUEST_URI} !/newsday-api\.php$ [NC]
+RewriteRule ^ newsday-install.php [L]
