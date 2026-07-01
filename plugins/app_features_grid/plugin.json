@@ -1,0 +1,16 @@
+{
+  "id": "app_features_grid",
+  "name": "Grid de Características App",
+  "version": "1.0.0",
+  "description": "Mosaico responsivo de funciones con iconos y efectos hover dinámicos.",
+  "author": "Newsday",
+  "type": "component",
+  "components": [
+    {
+      "type": "app_features_grid",
+      "ic": "⚡",
+      "lb": "Características Grid",
+      "hint": "Mosaico responsivo de funciones con iconos y efectos hover dinámicos"
+    }
+  ]
+}
