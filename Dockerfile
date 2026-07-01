@@ -19,7 +19,12 @@ RUN a2enmod rewrite
 # Permitir .htaccess en el directorio raíz
 RUN sed -i 's/AllowOverride None/AllowOverride All/g' /etc/apache2/apache2.conf
 
-# Permisos para que PHP pueda escribir en content/, media/, backups/, public/
+# Copiar el código de la aplicación (imagen autocontenida).
+# .dockerignore excluye datos de instalación, secretos y material de cliente.
+# En desarrollo, docker-compose monta el código encima para edición en vivo.
+COPY . /var/www/html/
+
+# Crear los directorios de datos y dar permisos de escritura a PHP
 RUN mkdir -p /var/www/html/content \
              /var/www/html/media \
              /var/www/html/backups \

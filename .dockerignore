@@ -1,0 +1,48 @@
+# Control de versiones y artefactos de build
+.git
+.gitignore
+dist
+tools
+
+# Secretos / configuración de instalación
+newsday-config.php
+newsday-config.php.bak
+
+# Datos y contenido de cada instalación (la imagen va "limpia")
+content/posts
+content/pages
+content/panel-users
+content/readers
+content/layouts
+content/site-config.json
+content/plugins-state.json
+content/favicons
+media/images
+media/audio
+media/video
+media/docs
+media/media-index.json
+backups
+public
+preview
+
+# Favicons publicados en la raíz
+favicon.ico
+favicon-16x16.png
+favicon-32x32.png
+apple-touch-icon.png
+icon-192.png
+icon-512.png
+
+# Específicos de despliegue/cliente
+docker-compose.cosmos.yml
+temas/uverse.php
+
+# Cruft del SO / editores
+.DS_Store
+**/.DS_Store
+Thumbs.db
+*.swp
+.idea
+.vscode
+*.zip
