@@ -14,9 +14,13 @@
 #  modo que aplicarlo desde cualquier versión previa deja la instalación al día.
 #
 #  Uso:
-#    tools/release.sh             # genera los dos ZIP en dist/
-#    tools/release.sh --docker    # además construye la imagen Docker
-#    tools/release.sh --publish   # crea el tag vX.Y.Z y la GitHub Release
+#    tools/release.sh               # genera los dos ZIP en dist/
+#    tools/release.sh --docker      # además construye la imagen Docker local
+#    tools/release.sh --docker-push # construye y publica la imagen en Docker Hub
+#    tools/release.sh --publish     # crea el tag vX.Y.Z y la GitHub Release
+#
+#  Repo de Docker Hub configurable con NEWSDAY_DOCKER_REPO (def: 8aws/newsday).
+#  El push requiere haber hecho `docker login` previamente.
 # ════════════════════════════════════════════════════════════════
 set -euo pipefail
 
@@ -28,12 +32,15 @@ VERSION="$(tr -d '[:space:]' < VERSION)"
 
 DIST="$ROOT/dist"
 DATE="$(date +%Y-%m-%d)"
+DOCKER_REPO="${NEWSDAY_DOCKER_REPO:-8aws/newsday}"
 BUILD_DOCKER=0
+DOCKER_PUSH=0
 PUBLISH=0
 for arg in "$@"; do
   case "$arg" in
-    --docker)  BUILD_DOCKER=1 ;;
-    --publish) PUBLISH=1 ;;
+    --docker)      BUILD_DOCKER=1 ;;
+    --docker-push) BUILD_DOCKER=1; DOCKER_PUSH=1 ;;
+    --publish)     PUBLISH=1 ;;
     *) echo "✗ Flag desconocido: $arg"; exit 1 ;;
   esac
 done
@@ -72,8 +79,15 @@ echo "  ✓ newsday-update-$VERSION.zip (update acumulativo)"
 # ── 3. Imagen Docker (opcional) ───────────────────────────────────
 if [ "$BUILD_DOCKER" = "1" ]; then
   if command -v docker >/dev/null 2>&1; then
-    docker build -t "newsday:$VERSION" -t "newsday:latest" "$ROOT"
-    echo "  ✓ imagen Docker newsday:$VERSION"
+    docker build \
+      -t "newsday:$VERSION" -t "newsday:latest" \
+      -t "$DOCKER_REPO:$VERSION" -t "$DOCKER_REPO:latest" "$ROOT"
+    echo "  ✓ imagen Docker $DOCKER_REPO:$VERSION"
+    if [ "$DOCKER_PUSH" = "1" ]; then
+      docker push "$DOCKER_REPO:$VERSION"
+      docker push "$DOCKER_REPO:latest"
+      echo "  ✓ imagen publicada en Docker Hub ($DOCKER_REPO)"
+    fi
   else
     echo "  ⚠ docker no disponible; omito la imagen"
   fi
@@ -105,7 +119,8 @@ if [ "$PUBLISH" = "1" ]; then
   NOTES="Newsday $VERSION ($DATE)
 
 - \`newsday-$VERSION.zip\` — instalación completa (descomprime en el servidor → instalador automático).
-- \`newsday-update-$VERSION.zip\` — update acumulativo (panel → Ajustes → Actualizar). No toca datos, config ni .htaccess; crea rollback automático."
+- \`newsday-update-$VERSION.zip\` — update acumulativo (panel → Ajustes → Actualizar). No toca datos, config ni .htaccess; crea rollback automático.
+- Contenedor: \`docker run -p 8080:80 $DOCKER_REPO:$VERSION\` (o \`docker compose up\` desde el zip de instalación)."
 
   if gh release view "$TAG" >/dev/null 2>&1; then
     gh release upload "$TAG" "$DIST/newsday-$VERSION.zip" "$DIST/newsday-update-$VERSION.zip" --clobber
